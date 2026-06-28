@@ -1,0 +1,4212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSO · Safety Operations System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* ════════════════════════════════════════════
+   TOKENS GLOBAIS
+════════════════════════════════════════════ */
+:root{
+  --bg:#0a0c10;--bg1:#0f1218;--bg2:#141820;--bg3:#1a2030;
+  --b:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
+  --cyan:#00d4ff;--cdim:rgba(0,212,255,.12);
+  --t:#e8eaf0;--t2:#8892a4;--t3:#4a5568;
+  --green:#26de81;--red:#ff4757;--orange:#ff9f43;--yellow:#ffd32a;--purple:#a29bfe;
+  --r:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);font-size:14px;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:0;}
+
+/* ════════════════════════════════════════════
+   HEADER
+════════════════════════════════════════════ */
+header{background:var(--bg1);border-bottom:1px solid var(--b2);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.la{display:flex;align-items:center;gap:14px;}
+.lm{width:36px;height:36px;background:var(--cdim);border:1px solid var(--cyan);border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.lm::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(from 0deg,transparent 60%,var(--cyan) 100%);animation:spin 4s linear infinite;opacity:.3;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.lm span{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--cyan);position:relative;z-index:1;}
+.lt{font-size:16px;font-weight:600;}
+.ls{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);letter-spacing:1px;}
+.hr{display:flex;align-items:center;gap:10px;}
+.pd{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+.ck{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--t2);}
+.nt{display:flex;gap:2px;background:var(--bg2);border:1px solid var(--b2);border-radius:8px;padding:3px;}
+.nb{padding:5px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--t2);transition:all .2s;}
+.nb.on{background:var(--cdim);color:var(--cyan);border:1px solid rgba(0,212,255,.3);}
+.nb:hover:not(.on){color:var(--t);background:var(--bg3);}
+
+/* ════════════════════════════════════════════
+   ABAS / PÁGINAS
+════════════════════════════════════════════ */
+.page{display:none;position:relative;z-index:1;}
+.page.active{display:block;}
+
+/* ════════════════════════════════════════════
+   COMPONENTES COMPARTILHADOS
+════════════════════════════════════════════ */
+.wrap{max-width:1400px;margin:0 auto;padding:20px;}
+.container{max-width:1280px;margin:0 auto;padding:20px;}
+
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border:1px solid transparent;}
+.chip-manaus{background:rgba(99,179,237,.12);color:#63b3ed;border-color:rgba(99,179,237,.25);}
+.chip-embu{background:rgba(162,155,254,.12);color:var(--purple);border-color:rgba(162,155,254,.25);}
+.chip-baixo{background:rgba(38,222,129,.12);color:var(--green);border-color:rgba(38,222,129,.25);}
+.chip-medio{background:rgba(255,211,42,.12);color:var(--yellow);border-color:rgba(255,211,42,.25);}
+.chip-alto{background:rgba(255,159,67,.12);color:var(--orange);border-color:rgba(255,159,67,.25);}
+.chip-critico{background:rgba(255,71,87,.12);color:var(--red);border-color:rgba(255,71,87,.4);box-shadow:0 0 8px rgba(255,71,87,.15);}
+.chip-aberta{background:rgba(0,212,255,.08);color:var(--cyan);border-color:rgba(0,212,255,.2);}
+.chip-andamento{background:rgba(255,159,67,.12);color:var(--orange);border-color:rgba(255,159,67,.25);}
+.chip-concluida{background:rgba(38,222,129,.12);color:var(--green);border-color:rgba(38,222,129,.25);}
+.chip-vencida{background:rgba(255,71,87,.12);color:var(--red);border-color:rgba(255,71,87,.3);}
+.nr-chip{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--cyan);background:var(--cdim);border:1px solid rgba(0,212,255,.2);border-radius:4px;padding:2px 6px;}
+
+/* BOTÕES */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:0 16px;height:36px;border-radius:5px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;font-family:'Inter',sans-serif;}
+.btn-cyan{background:var(--cdim);border-color:rgba(0,212,255,.4);color:var(--cyan);}
+.btn-cyan:hover{background:rgba(0,212,255,.2);}
+.btn-ghost{background:transparent;border-color:var(--b2);color:var(--t2);}
+.btn-ghost:hover{color:var(--t);border-color:rgba(255,255,255,.2);background:var(--bg2);}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--b2);color:var(--t);padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.3);transform:translateY(70px);opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);z-index:600;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{border-left:3px solid var(--green);}
+.toast.err{border-left:3px solid var(--red);}
+
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--b2);}
+
+
+/* ════════════════════════════════════════════
+   ABA 1 — DEMANDAS
+════════════════════════════════════════════ */
+.stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;}
+.stat{background:var(--bg1);border:1px solid var(--b);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s;}
+.stat:hover{border-color:var(--b2);transform:translateY(-1px);}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent,var(--cyan));opacity:.6;}
+.stat-lbl{font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:600;color:var(--accent,var(--cyan));line-height:1;}
+.stat-desc{font-size:12px;color:var(--t3);margin-top:4px;}
+.stat.danger{--accent:var(--red);}
+.stat.warn{--accent:var(--orange);}
+.stat.ok{--accent:var(--green);}
+
+.controls{background:var(--bg1);border:1px solid var(--b);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;}
+.ctrl-group{display:flex;flex-direction:column;gap:4px;}
+.ctrl-label{font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;}
+.ctrl-select,.ctrl-input{height:36px;background:var(--bg2);border:1px solid var(--b2);border-radius:5px;color:var(--t);font-family:'Inter',sans-serif;font-size:14px;padding:0 10px;outline:none;transition:border-color .15s,box-shadow .15s;cursor:pointer;}
+.ctrl-select:focus,.ctrl-input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px var(--cdim);}
+.ctrl-input{min-width:200px;}
+.ctrl-input::placeholder{color:var(--t3);}
+.ctrl-select option{background:#1a2030;}
+.controls-right{margin-left:auto;display:flex;gap:8px;align-items:flex-end;}
+
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.toolbar-title{font-size:13px;font-weight:600;color:var(--t2);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;}
+.count-chip{background:var(--cdim);border:1px solid rgba(0,212,255,.25);color:var(--cyan);border-radius:20px;padding:1px 10px;font-size:13px;font-family:'JetBrains Mono',monospace;}
+
+.table-wrap{background:var(--bg1);border:1px solid var(--b);border-radius:var(--r);overflow:hidden;}
+/* Estilos da tabela de demandas — escopados para não vazar no Gantt */
+.table-wrap table{width:100%;border-collapse:collapse;}
+.table-wrap thead th{background:var(--bg2);padding:10px 14px;text-align:left;font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--b2);cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s;}
+.table-wrap thead th:hover{color:var(--cyan);}
+.table-wrap thead th.sort-active{color:var(--cyan);}
+.table-wrap tbody tr{border-bottom:1px solid var(--b);transition:background .1s;}
+.table-wrap tbody tr:last-child{border-bottom:none;}
+.table-wrap tbody tr:hover{background:rgba(255,255,255,.02);}
+.table-wrap tbody tr.row-critico{border-left:2px solid var(--red);}
+.table-wrap tbody tr.row-vencido{background:rgba(255,71,87,.04);}
+.table-wrap tbody td{padding:11px 14px;vertical-align:middle;}
+.td-main{font-weight:500;font-size:15px;color:var(--t);}
+.td-sub{font-size:13px;color:var(--t3);margin-top:2px;}
+.td-desc{font-size:13px;color:var(--t2);margin-top:1px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+.prog-wrap{display:flex;align-items:center;gap:8px;}
+.prog-track{width:72px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),#0099cc);transition:width .4s ease;}
+.prog-pct{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--t2);min-width:36px;}
+
+.prazo-ok{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--t2);}
+.prazo-warn{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--orange);}
+.prazo-red{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--red);font-weight:600;}
+
+.acoes{display:flex;gap:5px;}
+.btn-consultar{display:inline-flex;align-items:center;gap:5px;padding:0 10px;height:26px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;background:var(--cdim);border:1px solid rgba(0,212,255,.25);color:var(--cyan);transition:all .15s;font-family:'Inter',sans-serif;}
+.btn-consultar:hover{background:rgba(0,212,255,.2);}
+.btn-del{display:inline-flex;align-items:center;gap:5px;padding:0 10px;height:26px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.25);color:var(--red);transition:all .15s;font-family:'Inter',sans-serif;}
+.btn-del:hover{background:rgba(255,71,87,.2);}
+
+.empty-tbl{padding:60px 20px;text-align:center;color:var(--t3);display:none;}
+.empty-icon{font-size:32px;opacity:.3;margin-bottom:12px;}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--bg1);border:1px solid var(--b2);border-radius:10px;padding:28px;width:100%;max-width:660px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(0,212,255,.05);position:relative;}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.4;}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.modal-ttl{font-size:17px;font-weight:600;color:var(--t);display:flex;align-items:center;gap:8px;}
+.modal-ttl::before{content:'';width:3px;height:18px;background:var(--cyan);border-radius:2px;display:block;}
+.modal-close{background:var(--bg3);border:1px solid var(--b2);color:var(--t2);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.modal-close:hover{color:var(--t);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg.span2{grid-column:1/-1;}
+.fg label{font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;}
+.fg input,.fg select,.fg textarea{background:var(--bg2);border:1px solid var(--b2);border-radius:5px;color:var(--t);font-family:'Inter',sans-serif;font-size:14px;padding:9px 12px;outline:none;transition:border-color .15s,box-shadow .15s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 2px var(--cdim);}
+.fg textarea{resize:vertical;min-height:64px;}
+.fg select option{background:#1a2030;}
+.fg input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.5);cursor:pointer;}
+.ba-section{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ba-card{background:var(--bg2);border:1px solid var(--b);border-radius:6px;overflow:hidden;transition:border-color .2s;}
+.ba-card:focus-within{border-color:rgba(0,212,255,.3);}
+.ba-header{display:flex;align-items:center;gap:7px;padding:8px 10px;border-bottom:1px solid var(--b);}
+.ba-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ba-before .ba-dot{background:var(--red);box-shadow:0 0 5px rgba(255,71,87,.5);}
+.ba-after .ba-dot{background:var(--green);box-shadow:0 0 5px rgba(38,222,129,.5);}
+.ba-name{font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:1px;}
+.ba-tag{margin-left:auto;font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;}
+.ba-before .ba-tag{background:rgba(255,71,87,.12);color:var(--red);}
+.ba-after .ba-tag{background:rgba(38,222,129,.12);color:var(--green);}
+.ba-body{padding:8px 10px;}
+.ba-input{width:100%;background:transparent;border:none;color:var(--t2);font-size:13px;font-family:'JetBrains Mono',monospace;outline:none;resize:none;line-height:1.5;}
+.ba-input::placeholder{color:var(--t3);}
+.ba-preview{padding:0 10px 8px;display:none;}
+.ba-preview.vis{display:block;}
+.ba-preview a{font-size:13px;color:var(--cyan);text-decoration:none;display:flex;align-items:center;gap:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ba-preview a:hover{text-decoration:underline;}
+.ba-preview a::before{content:'↗';font-size:10px;flex-shrink:0;}
+.nr-picker{display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+.nr-pill{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;background:var(--bg2);border:1px solid var(--b2);color:var(--t2);border-radius:4px;padding:4px 10px;cursor:pointer;transition:all .15s;}
+.nr-pill:hover{color:var(--cyan);border-color:rgba(0,212,255,.3);}
+.nr-pill.sel{background:var(--cdim);color:var(--cyan);border-color:rgba(0,212,255,.4);}
+.range-row{display:flex;align-items:center;gap:10px;}
+.range-row input[type=range]{flex:1;accent-color:var(--cyan);}
+.range-val{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--cyan);font-weight:600;min-width:40px;text-align:right;}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:24px;padding-top:16px;border-top:1px solid var(--b);}
+.form-divider{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:4px 0;}
+.form-divider span{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
+.form-divider::before,.form-divider::after{content:'';flex:1;height:1px;background:var(--b);}
+
+/* emp switcher demandas */
+.emp-switcher{display:flex;background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:3px;gap:2px;}
+.emp-btn{padding:4px 12px;border-radius:16px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--t2);transition:all .2s;letter-spacing:.3px;}
+.emp-btn.ativo{background:var(--cdim);color:var(--cyan);border:1px solid rgba(0,212,255,.3);}
+.emp-btn:hover:not(.ativo){color:var(--t);background:var(--bg3);}
+
+
+/* ════════════════════════════════════════════
+   ABA 2 — GANTT
+════════════════════════════════════════════ */
+.ctrl-gantt{background:var(--bg1);border:1px solid var(--b);border-radius:var(--r);padding:14px 18px;margin-bottom:14px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;}
+.cg{display:flex;flex-direction:column;gap:4px;}
+.cl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;}
+.cs{height:34px;background:var(--bg2);border:1px solid var(--b2);border-radius:5px;color:var(--t);font-family:'Inter',sans-serif;font-size:13px;padding:0 10px;outline:none;cursor:pointer;}
+.cs option{background:#1a2030;}
+.cr{margin-left:auto;display:flex;gap:8px;align-items:flex-end;}
+.btn-sm{display:inline-flex;align-items:center;gap:6px;padding:0 16px;height:34px;border-radius:5px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .15s;font-family:'Inter',sans-serif;}
+.btn-sm-c{background:var(--cdim);border-color:rgba(0,212,255,.4);color:var(--cyan);}
+.btn-sm-c:hover{background:rgba(0,212,255,.2);}
+.btn-sm-g{background:transparent;border-color:var(--b2);color:var(--t2);}
+.btn-sm-g:hover{color:var(--t);background:var(--bg2);}
+
+.leg{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap;}
+.li{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+
+.gantt-box{background:var(--bg1);border:1px solid var(--b);border-radius:var(--r);overflow:hidden;}
+.gantt-scroll{overflow-x:auto;overflow-y:visible;}
+.gt{border-collapse:collapse;table-layout:fixed;background:var(--bg1);}
+.gt td,.gt th{padding:0;border-bottom:1px solid var(--b);border-right:none;vertical-align:middle;}
+.gt tr:last-child td{border-bottom:none;}
+.col-lbl{width:300px;min-width:300px;position:sticky;left:0;z-index:30;background:var(--bg1);border-right:1px solid var(--b2) !important;}
+th.col-lbl{background:var(--bg2);padding:0 14px;height:38px;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;text-align:left;}
+td.col-lbl{padding:10px 14px;}
+td.col-lbl.grp{background:var(--bg2);padding:8px 14px;}
+.lbl-titulo{font-size:15px;font-weight:500;color:var(--t);line-height:1.35;}
+.lbl-sub{font-size:13px;color:var(--t3);margin-top:4px;}
+.grp-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:8px;}
+.grp-tag{font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;}
+th.col-mes{height:38px;background:var(--bg2);font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;text-align:left;padding:0 12px;border-right:1px solid var(--b);}
+th.col-mes.cur{color:var(--cyan);}
+td.col-dia{width:52px;min-width:52px;max-width:52px;height:72px;padding:0;border-right:1px solid rgba(255,255,255,.055);position:relative;vertical-align:middle;}
+td.col-dia.we{background:rgba(255,255,255,.03);}
+td.col-dia.hoje{border-right:2px solid var(--cyan) !important;background:rgba(0,212,255,.04);}
+tr.grp-row td.col-dia{height:36px;background:rgba(255,255,255,.02);}
+.bar-anchor{position:absolute;top:50%;transform:translateY(-50%);height:40px;border-radius:5px;display:flex;align-items:center;padding:0 10px;overflow:hidden;cursor:default;z-index:10;transition:filter .15s;white-space:nowrap;}
+.bar-anchor:hover{filter:brightness(1.2);}
+.bar-prog{position:absolute;top:0;left:0;bottom:0;border-radius:4px 0 0 4px;pointer-events:none;}
+.bar-lbl{position:relative;z-index:1;font-size:12px;font-weight:600;}
+.hoje-lbl{position:absolute;top:2px;left:50%;transform:translateX(-50%);background:var(--cyan);color:#000;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap;pointer-events:none;z-index:20;}
+.empty-gantt{padding:56px 20px;text-align:center;color:var(--t3);display:none;}
+.empty-gantt .ei{font-size:36px;opacity:.3;margin-bottom:12px;}
+.tt{position:fixed;z-index:500;background:var(--bg3);border:1px solid var(--b2);border-radius:8px;padding:12px 14px;min-width:230px;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,.5);pointer-events:none;opacity:0;transition:opacity .12s;font-size:12px;}
+.tt.vis{opacity:1;}
+.ttt{font-size:13px;font-weight:600;color:var(--t);margin-bottom:8px;line-height:1.35;}
+.ttr{display:flex;justify-content:space-between;gap:12px;margin-bottom:3px;}
+.ttl{color:var(--t3);}
+.ttv{font-weight:600;color:var(--t2);font-family:'JetBrains Mono',monospace;}
+.ttb{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:6px;}
+.ttf{height:100%;border-radius:3px;}
+
+
+/* ════════════════════════════════════════════
+   ABA 3 — INDICADORES
+════════════════════════════════════════════ */
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.top-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;}
+.emp-sw{display:flex;background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:3px;gap:2px;}
+.esw{padding:5px 16px;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--t2);transition:all .2s;}
+.esw.on{background:var(--cdim);color:var(--cyan);border:1px solid rgba(0,212,255,.3);}
+.esw:hover:not(.on){color:var(--t);background:var(--bg3);}
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;}
+.kpi{background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:18px 16px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s;cursor:default;}
+.kpi:hover{border-color:var(--b2);transform:translateY(-2px);}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--cyan));opacity:.7;}
+.kpi-lbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.kpi-num{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:600;color:var(--ac,var(--cyan));line-height:1;}
+.kpi-sub{font-size:11px;color:var(--t3);margin-top:6px;}
+.kpi.red{--ac:var(--red);}
+.kpi.orange{--ac:var(--orange);}
+.kpi.green{--ac:var(--green);}
+.kpi.yellow{--ac:var(--yellow);}
+.kpi.purple{--ac:var(--purple);}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.charts-grid2{display:grid;grid-template-columns:2fr 1fr;gap:14px;}
+.panel{background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:20px;}
+.panel-title{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.panel-title::after{content:'';flex:1;height:1px;background:var(--b);}
+.donut-wrap{display:flex;align-items:center;gap:20px;}
+.donut-svg{flex-shrink:0;}
+.donut-legend{display:flex;flex-direction:column;gap:8px;flex:1;}
+.dl-item{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.dl-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.dl-name{font-size:12px;color:var(--t2);flex:1;}
+.dl-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--t);}
+.dl-pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3);min-width:32px;text-align:right;}
+.hbar-list{display:flex;flex-direction:column;gap:12px;}
+.hbar-item{}
+.hbar-header{display:flex;justify-content:space-between;margin-bottom:4px;}
+.hbar-name{font-size:12px;color:var(--t2);}
+.hbar-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--t);}
+.hbar-track{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.hbar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+.radial-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.radial-svg-wrap{position:relative;width:140px;height:140px;}
+.radial-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.radial-num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:600;color:var(--cyan);}
+.radial-lbl{font-size:11px;color:var(--t3);}
+.alert-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;}
+.alert-item{background:var(--bg2);border:1px solid var(--b);border-radius:6px;padding:10px 12px;display:flex;align-items:center;gap:10px;transition:border-color .15s;}
+.alert-item:hover{border-color:var(--b2);}
+.alert-item.critico{border-left:3px solid var(--red);}
+.alert-item.alto{border-left:3px solid var(--orange);}
+.alert-item.medio{border-left:3px solid var(--yellow);}
+.alert-item.baixo{border-left:3px solid var(--green);}
+.alert-dias{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;min-width:36px;text-align:center;}
+.alert-info{flex:1;min-width:0;}
+.alert-titulo{font-size:13px;font-weight:500;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.alert-sub{font-size:11px;color:var(--t3);margin-top:2px;}
+.chip-sm{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;}
+.emp-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.emp-card{background:var(--bg2);border:1px solid var(--b);border-radius:6px;padding:14px;}
+.emp-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+.emp-stat{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--b);}
+.emp-stat:last-child{border-bottom:none;}
+.emp-stat-lbl{font-size:12px;color:var(--t2);}
+.emp-stat-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--t);}
+.timeline{display:flex;flex-direction:column;gap:0;}
+.tl-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b);}
+.tl-row:last-child{border-bottom:none;}
+.tl-mes{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3);min-width:52px;}
+.tl-bar-wrap{flex:1;height:20px;background:var(--bg3);border-radius:3px;overflow:hidden;position:relative;}
+.tl-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t2);min-width:20px;text-align:right;}
+.vazio{padding:40px 20px;text-align:center;color:var(--t3);}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr);}
+  .charts-grid{grid-template-columns:1fr 1fr;}
+  .charts-grid2{grid-template-columns:1fr;}
+}
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:repeat(3,1fr);}
+  .form-grid{grid-template-columns:1fr;}
+  .ba-section{grid-template-columns:1fr;}
+}
+@media(max-width:700px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .charts-grid{grid-template-columns:1fr;}
+  .emp-compare{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+/* ── GANTT: cabeçalho de dias — isolado do CSS global de thead th ── */
+.gt thead th,
+.gt tbody td { box-sizing:border-box; }
+
+/* célula da linha de dias */
+.gt-day {
+  width:52px; min-width:52px; max-width:52px;
+  height:36px;
+  padding:0;
+  text-align:center;
+  font-size:11px;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:400;
+  color:var(--t3);
+  background:var(--bg2);
+  border-right:1px solid rgba(255,255,255,.055);
+  border-bottom:1px solid var(--b2);
+  /* resetar herança do thead th global */
+  text-transform:none;
+  letter-spacing:0;
+  cursor:default;
+  user-select:none;
+  white-space:nowrap;
+  transition:none;
+  vertical-align:middle;
+}
+.gt-day:hover { color:var(--t3) !important; }
+.gt-day.gt-day-we { font-weight:700; color:var(--t2); background:rgba(255,255,255,.02); }
+.gt-day.gt-day-hoje { color:var(--cyan); background:rgba(0,212,255,.06); border-right:2px solid var(--cyan) !important; }
+
+/* célula label da linha de dias */
+.gt-day-lbl {
+  height:32px;
+  border-bottom:1px solid var(--b2);
+  background:var(--bg1);
+  padding:0;
+  cursor:default;
+}
+.gt-day-lbl:hover { color:var(--t3) !important; }
+</style>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" defer></script>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  HEADER UNIFICADO                        ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<header>
+  <div class="la">
+    <div class="lm"><span>SO</span></div>
+    <div>
+      <div class="lt">SSO · Safety Operations System</div>
+      <div class="ls">SAFETY OPERATIONS SYSTEM v2.0</div>
+    </div>
+  </div>
+  <div class="hr">
+    <div class="pd" id="status-dot" title="Firebase conectado"></div>
+    <span class="ck" id="clock">--:--:--</span>
+    <div class="nt">
+      <button class="nb on" id="nav-demandas" onclick="showPage('demandas')">📋 Demandas</button>
+      <button class="nb" id="nav-gantt" onclick="showPage('gantt')">📅 Gantt</button>
+      <button class="nb" id="nav-indicadores" onclick="showPage('indicadores')">📊 Indicadores</button>
+    </div>
+  </div>
+</header>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  ABA 1 — DEMANDAS                        ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="page active" id="page-demandas">
+<div class="container">
+
+  <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px;">
+    <div class="emp-switcher">
+      <button class="emp-btn ativo" data-val="" onclick="demSetEmp(this)">TODOS</button>
+      <button class="emp-btn" data-val="CD Manaus" onclick="demSetEmp(this)">MANAUS</button>
+      <button class="emp-btn" data-val="CD Embu" onclick="demSetEmp(this)">EMBU</button>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="stats-grid"></div>
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <span class="ctrl-label">Status</span>
+      <select class="ctrl-select" id="f-status" onchange="demRender()">
+        <option value="">Todos</option>
+        <option>Aberta</option><option>Em andamento</option><option>Concluída</option><option>Vencida</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">Risco</span>
+      <select class="ctrl-select" id="f-risco" onchange="demRender()">
+        <option value="">Todos</option>
+        <option>Baixo</option><option>Médio</option><option>Alto</option><option>Crítico</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">Base normativa</span>
+      <input class="ctrl-input" type="text" id="f-nr" placeholder="NR-35, IN, Portaria..." oninput="demRender()" style="min-width:160px">
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">Buscar</span>
+      <input class="ctrl-input" type="text" id="f-busca" placeholder="Título, descrição, setor..." oninput="demRender()">
+    </div>
+    <div class="controls-right">
+      <button class="btn btn-ghost" onclick="demClearFilters()">↺ Limpar</button>
+      <button class="btn btn-ghost" onclick="demExportCSV()">⬇ CSV</button>
+      <button class="btn btn-cyan" onclick="openModal()">+ Nova demanda</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <span class="toolbar-title">Demandas</span>
+    <span class="count-chip" id="count-chip">0</span>
+    <div style="flex:1"></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="demSortBy('titulo',event)">Demanda</th>
+          <th onclick="demSortBy('empresa',event)">Empresa</th>
+          <th onclick="demSortBy('nr',event)">NR</th>
+          <th onclick="demSortBy('risco',event)">Risco</th>
+          <th onclick="demSortBy('status',event)">Status</th>
+          <th onclick="demSortBy('prazo',event)">Prazo</th>
+          <th>Progresso</th>
+          <th>Evidências</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="dem-tbody"></tbody>
+    </table>
+    <div class="empty-tbl" id="dem-empty">
+      <div class="empty-icon">⬡</div>
+      <p>Nenhuma demanda encontrada</p>
+    </div>
+  </div>
+
+</div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  ABA 2 — GANTT                           ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="page" id="page-gantt">
+<div class="wrap">
+
+  <div class="ctrl-gantt">
+    <div class="cg"><span class="cl">Empresa</span>
+      <select class="cs" id="g-fe" onchange="ganttBuild()">
+        <option value="">Todas</option><option>CD Manaus</option><option>CD Embu</option>
+      </select>
+    </div>
+    <div class="cg"><span class="cl">Risco</span>
+      <select class="cs" id="g-fr" onchange="ganttBuild()">
+        <option value="">Todos</option>
+        <option>Baixo</option><option>Médio</option><option>Alto</option><option>Crítico</option>
+      </select>
+    </div>
+    <div class="cg"><span class="cl">Status</span>
+      <select class="cs" id="g-fs" onchange="ganttBuild()">
+        <option value="">Todos</option>
+        <option>Aberta</option><option>Em andamento</option><option>Concluída</option>
+      </select>
+    </div>
+    <div class="cg"><span class="cl">Período</span>
+      <select class="cs" id="g-fp" onchange="ganttBuild()">
+        <option value="3">3 meses</option>
+        <option value="6" selected>6 meses</option>
+        <option value="12">12 meses</option>
+      </select>
+    </div>
+    <div class="cr">
+      <button class="btn-sm btn-sm-g" onclick="ganttIrHoje()">⊙ Hoje</button>
+      <button class="btn-sm btn-sm-c" onclick="openModal()">+ Nova demanda</button>
+    </div>
+  </div>
+
+  <div class="leg">
+    <span style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px">Risco:</span>
+    <div class="li"><div class="ld" style="background:#26de81"></div>Baixo</div>
+    <div class="li"><div class="ld" style="background:#ffd32a"></div>Médio</div>
+    <div class="li"><div class="ld" style="background:#ff9f43"></div>Alto</div>
+    <div class="li"><div class="ld" style="background:#ff4757"></div>Crítico</div>
+    <div style="width:1px;height:14px;background:var(--b2)"></div>
+    <div class="li"><div style="width:2px;height:14px;background:var(--cyan);border-radius:1px;box-shadow:0 0 5px var(--cyan)"></div>Hoje</div>
+    <div class="li"><div class="ld" style="background:rgba(255,255,255,.06);border:1px solid var(--b2)"></div>Fim de semana</div>
+  </div>
+
+  <div class="gantt-box">
+    <div class="gantt-scroll" id="gscroll">
+      <table class="gt" id="gtable"><thead id="gthead"></thead><tbody id="gtbody"></tbody></table>
+    </div>
+    <div class="empty-gantt" id="empty-gantt"><div class="ei">📅</div><p>Nenhuma demanda com datas definidas.</p></div>
+  </div>
+
+</div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  ABA 3 — INDICADORES                     ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="page" id="page-indicadores">
+<div class="wrap">
+
+  <div class="top-bar">
+    <span class="top-title">⬡ Visão geral · Tempo real</span>
+    <div class="emp-sw">
+      <button class="esw on" data-v="" onclick="indSetEmp(this)">TODAS</button>
+      <button class="esw" data-v="CD Manaus" onclick="indSetEmp(this)">MANAUS</button>
+      <button class="esw" data-v="CD Embu" onclick="indSetEmp(this)">EMBU</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <div class="charts-grid">
+    <div class="panel">
+      <div class="panel-title">Distribuição por status</div>
+      <div class="donut-wrap">
+        <svg class="donut-svg" id="donut-status" width="130" height="130" viewBox="0 0 130 130"></svg>
+        <div class="donut-legend" id="leg-status"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Distribuição por risco</div>
+      <div class="donut-wrap">
+        <svg class="donut-svg" id="donut-risco" width="130" height="130" viewBox="0 0 130 130"></svg>
+        <div class="donut-legend" id="leg-risco"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Progresso geral</div>
+      <div class="radial-wrap">
+        <div class="radial-svg-wrap">
+          <svg width="140" height="140" viewBox="0 0 140 140" id="radial-svg"></svg>
+          <div class="radial-center">
+            <span class="radial-num" id="radial-num">0%</span>
+            <span class="radial-lbl">concluído</span>
+          </div>
+        </div>
+        <div class="hbar-list" id="prog-empresa" style="width:100%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-grid2" style="margin-top:14px">
+    <div class="panel">
+      <div class="panel-title">⏰ Vencendo em breve / vencidas</div>
+      <div class="alert-list" id="alert-list"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">🏭 Comparativo por empresa</div>
+      <div class="emp-compare" id="emp-compare"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-title">📆 Demandas por mês de prazo</div>
+    <div class="timeline" id="ind-timeline"></div>
+  </div>
+
+</div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  MODAL — compartilhado                   ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <span class="modal-ttl" id="modal-ttl">Nova demanda</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="fg span2">
+        <label>Título *</label>
+        <input type="text" id="m-titulo" placeholder="Ex: Revisão do PPRA — armazém seco">
+      </div>
+      <div class="fg span2">
+        <label>Descrição</label>
+        <textarea id="m-desc" placeholder="Contexto, escopo, o que precisa ser feito..."></textarea>
+      </div>
+      <div class="fg">
+        <label>Empresa *</label>
+        <select id="m-emp" onchange="updateNRs()">
+          <option value="">Selecionar</option>
+          <option>CD Manaus</option><option>CD Embu</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Setor / área</label>
+        <input type="text" id="m-setor" placeholder="Armazém, Expedição, RH...">
+      </div>
+      <div class="fg span2">
+        <label>Base normativa <span style="font-weight:400;text-transform:none;color:var(--t3)">— NR, IN, Portaria, procedimento interno...</span></label>
+        <input type="text" id="m-nr" placeholder="Ex: NR-35, IN 92/2021, Procedimento SSO-03..." autocomplete="off">
+        <div class="nr-picker" id="nr-picker" style="margin-top:6px"></div>
+      </div>
+      <div class="fg">
+        <label>Nível de risco *</label>
+        <select id="m-risco">
+          <option value="">Selecionar</option>
+          <option>Baixo</option><option>Médio</option><option>Alto</option><option>Crítico</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Status</label>
+        <select id="m-status">
+          <option>Aberta</option><option>Em andamento</option><option>Concluída</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Responsável</label>
+        <input type="text" id="m-resp" placeholder="Nome">
+      </div>
+      <div class="fg">
+        <label>Data de início</label>
+        <input type="date" id="m-inicio">
+      </div>
+      <div class="fg">
+        <label>Prazo (data-limite) *</label>
+        <input type="date" id="m-prazo">
+      </div>
+      <div class="fg span2">
+        <label>Progresso</label>
+        <div class="range-row">
+          <input type="range" min="0" max="100" value="0" id="m-prog"
+            oninput="document.getElementById('prog-val').textContent=this.value+'%'">
+          <span class="range-val" id="prog-val">0%</span>
+        </div>
+      </div>
+      <div class="fg span2">
+        <label>Observações técnicas</label>
+        <textarea id="m-obs" placeholder="Artigos, referências, observações técnicas..."></textarea>
+      </div>
+      <div class="form-divider"><span>📎 Evidências fotográficas</span></div>
+      <div class="ba-section">
+        <div class="ba-card ba-before">
+          <div class="ba-header">
+            <div class="ba-dot"></div>
+            <span class="ba-name">Before</span>
+            <span class="ba-tag">Problema</span>
+          </div>
+          <div class="ba-body">
+            <textarea class="ba-input" id="m-before" rows="2"
+              placeholder="Link da foto / evidência do problema..."
+              oninput="previewLink('before')"></textarea>
+          </div>
+          <div class="ba-preview" id="preview-before">
+            <a id="link-before" href="#" target="_blank" rel="noopener"></a>
+          </div>
+        </div>
+        <div class="ba-card ba-after">
+          <div class="ba-header">
+            <div class="ba-dot"></div>
+            <span class="ba-name">After</span>
+            <span class="ba-tag">Resolvido</span>
+          </div>
+          <div class="ba-body">
+            <textarea class="ba-input" id="m-after" rows="2"
+              placeholder="Link da foto / evidência da resolução..."
+              oninput="previewLink('after')"></textarea>
+          </div>
+          <div class="ba-preview" id="preview-after">
+            <a id="link-after" href="#" target="_blank" rel="noopener"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-cyan" onclick="modalSave()">Salvar demanda</button>
+    </div>
+  </div>
+</div>
+
+<div class="tt" id="tt"></div>
+<div class="toast" id="toast"></div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  JAVASCRIPT UNIFICADO                    ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<script>
+/* ─────────────────────────────────────────────────────────────
+   UTILITÁRIOS GLOBAIS
+───────────────────────────────────────────────────────────── */
+const $  = id => document.getElementById(id);
+const ce = tag => document.createElement(tag);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmt = s => { if(!s)return'—'; const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; };
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const COR_RISCO = {Baixo:'#26de81',Médio:'#ffd32a',Alto:'#ff9f43',Crítico:'#ff4757'};
+
+/* ─────────────────────────────────────────────────────────────
+   DADOS COMPARTILHADOS (localStorage chave única)
+───────────────────────────────────────────────────────────── */
+const DEMO_DATA = [
+  {
+    "id": 1,
+    "titulo": "Colaboradores sem EPI (botina de segurança) na área operacional",
+    "descricao": "Adquirir o EPI adequado (botina com biqueira) e realizar treinamento de EPI obrigatório para todos os colaboradores.",
+    "empresa": "CD Embu",
+    "setor": "Área Operacional",
+    "nr": "NR-6 / NR-17",
+    "risco": "Crítico",
+    "status": "Concluída",
+    "responsavel": "Will / Julia",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-15",
+    "progresso": 100,
+    "obs": "Origem: Geral | NC#1",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 2,
+    "titulo": "Colaboradores sem colete refletivo nas áreas operacionais",
+    "descricao": "Instituir uso obrigatório de coletes refletivos na operação. Proibir acesso à área de docas sem EPI completo. Instalar barreira ou cancela de controle de acesso a docas.",
+    "empresa": "CD Embu",
+    "setor": "Área Operacional / Docas",
+    "nr": "NR-6 / NR-11",
+    "risco": "Crítico",
+    "status": "Em andamento",
+    "responsavel": "SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-15",
+    "progresso": 40,
+    "obs": "Origem: Geral | NC#2",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 3,
+    "titulo": "Equipamentos de combate a incêndio obstruídos, acondicionados em locais não conformes e sem sinalização",
+    "descricao": "Desobstruir equipamentos de combate a incêndio. Adequar locais conforme PPCI. Demarcar no piso área de acesso livre ao extintor (mínimo 1m de raio).",
+    "empresa": "CD Embu",
+    "setor": "Múltiplos Setores",
+    "nr": "NR-23 / NBR 12693",
+    "risco": "Crítico",
+    "status": "Concluída",
+    "responsavel": "SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-10",
+    "progresso": 100,
+    "obs": "Origem: Geral | NC#3",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 4,
+    "titulo": "Fiação elétrica exposta e régua de tomadas expostas na operação",
+    "descricao": "Retirar a régua do piso imediatamente. Organizar a fiação com canaletas adequadas. Remover material inflamável. Acionar eletricista habilitado.",
+    "empresa": "CD Embu",
+    "setor": "Estação de Trabalho",
+    "nr": "NR-10 / NBR 5410",
+    "risco": "Alto",
+    "status": "Em andamento",
+    "responsavel": "Facilities / Gerência",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-30",
+    "progresso": 40,
+    "obs": "Origem: Geral | NC#4",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 5,
+    "titulo": "Colaboradores com acesso livre ao quadro elétrico de alta tensão",
+    "descricao": "Restringir acesso ao quadro elétrico apenas a profissionais habilitados (NR-10). Instalar cadeado de segurança no quadro.",
+    "empresa": "CD Embu",
+    "setor": "Casa de Força",
+    "nr": "NR-10",
+    "risco": "Alto",
+    "status": "Em andamento",
+    "responsavel": "SESMT / RH / Gerência",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-30",
+    "progresso": 40,
+    "obs": "Origem: Geral | NC#5",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 6,
+    "titulo": "Mercadorias e paletes fora das áreas demarcadas no piso",
+    "descricao": "Demarcar áreas para acondicionamento de paletes. Realocar paletes. Campanha de conscientização 5S.",
+    "empresa": "CD Embu",
+    "setor": "Expedição / Recebimento / Inventário",
+    "nr": "NR-17 / NR-11",
+    "risco": "Alto",
+    "status": "Em andamento",
+    "responsavel": "Gerência / Facilities",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-20",
+    "progresso": 40,
+    "obs": "Origem: Geral | NC#6",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 7,
+    "titulo": "Circulação simultânea de pedestre e empilhadeira no mesmo corredor de prateleiras",
+    "descricao": "Proibir imediatamente circulação de pedestres em corredores com empilhadeira em operação. Instalar cancelas/cones/correntes. Implementar procedimento formal.",
+    "empresa": "CD Embu",
+    "setor": "Corredor Porta-Paletes",
+    "nr": "NR-11 / NR-35",
+    "risco": "Crítico",
+    "status": "Em andamento",
+    "responsavel": "SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 40,
+    "obs": "Origem: Geral | NC#7",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 8,
+    "titulo": "Colaboradores trabalhando com cabelos soltos e adornos",
+    "descricao": "Exigir uso obrigatório de cabelo amarrado. Proibir adornos durante o turno. Incluir revista visual na portaria.",
+    "empresa": "CD Embu",
+    "setor": "Área Operacional / Picking",
+    "nr": "NR-01 / NR-06 / NR-12",
+    "risco": "Médio",
+    "status": "Em andamento",
+    "responsavel": "RH e Gerência",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 40,
+    "obs": "Origem: Geral | NC#8",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 9,
+    "titulo": "Colaboradores sem capacete de proteção nos Drive-Ins",
+    "descricao": "Tornar obrigatório o uso de capacete classe B (com jugular) nos corredores de porta-paletes. Posicionar capacetes em cada entrada de rua.",
+    "empresa": "CD Embu",
+    "setor": "Área Drive-In",
+    "nr": "NR-11 / NR-06",
+    "risco": "Médio",
+    "status": "Em andamento",
+    "responsavel": "SESMT / Facilities",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-05",
+    "progresso": 40,
+    "obs": "Origem: Geral | NC#9",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 10,
+    "titulo": "Estilete com lâmina exposta e trava improvisada com fita adesiva",
+    "descricao": "Retirar imediatamente o estilete de uso. Substituir por estilete com trava funcional, preferencialmente com retração automática.",
+    "empresa": "CD Embu",
+    "setor": "Bancada de Trabalho",
+    "nr": "NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-05",
+    "progresso": 0,
+    "obs": "Origem: Geral | NC#10",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 11,
+    "titulo": "Abrigo de hidrante incompleto — ausência de itens obrigatórios",
+    "descricao": "Acionar empresa especializada. Completar kit conforme NBR 13714. Afixar etiqueta de inspeção.",
+    "empresa": "CD Embu",
+    "setor": "Área Interna",
+    "nr": "NBR 13714 / NR-23",
+    "risco": "Médio",
+    "status": "Concluída",
+    "responsavel": "SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 100,
+    "obs": "Origem: Geral | NC#11",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 12,
+    "titulo": "Gerador externo com extintor posicionado de forma inadequada",
+    "descricao": "Instalar placa de sinalização de área restrita. Demarcar espaço de segurança de 1,5m. Garantir extintor em suporte fixo.",
+    "empresa": "CD Embu",
+    "setor": "Pátio Externo",
+    "nr": "NR-23 / NBR 12693",
+    "risco": "Médio",
+    "status": "Em andamento",
+    "responsavel": "SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-30",
+    "progresso": 40,
+    "obs": "Origem: Geral | NC#12",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 13,
+    "titulo": "Vestiário com múltiplas irregularidades — privacidade, organização e descanso",
+    "descricao": "Instalar travas/fechaduras nas cabines. Proibir guarda de objetos sobre os armários. Instalar prateleiras. Adquirir mobiliário de descanso suficiente.",
+    "empresa": "CD Embu",
+    "setor": "Vestiário",
+    "nr": "NR-24 / NR-17 / CLT Art.71",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-30",
+    "progresso": 0,
+    "obs": "Origem: Geral | NC#13",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 14,
+    "titulo": "Ausência de iluminação direcionada nas docas para recebimento de veículos de carga",
+    "descricao": "Instalar luminárias tipo 'dock light' em cada posição de atracação. Disponibilizar lanternas portáteis como solução provisória. Regularizar fiação da câmera.",
+    "empresa": "CD Embu",
+    "setor": "Docas",
+    "nr": "NR-17 / NR-11 / NBR 5413",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-30",
+    "progresso": 0,
+    "obs": "Origem: Geral | NC#14",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 15,
+    "titulo": "Implementar IMEDIATAMENTE barreira física (cones/totens/corrente) na área de elevação de cargas em frente ao mezanino",
+    "descricao": "Instalar kit de cones + totens com correntes ou fita zebrada delimitando zona mínima de segurança sob os garfos. Nenhuma operação de elevação deve ocorrer sem esta barreira.",
+    "empresa": "CD Embu",
+    "setor": "Área frente ao mezanino",
+    "nr": "NR-11 / NR-12",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "Operação / Facilities",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#1",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 16,
+    "titulo": "Emitir Ordem de Serviço proibindo circulação simultânea de pedestres e empilhadeiras sem segregação",
+    "descricao": "Redigir e afixar Ordem de Serviço (NR-1) em todos os quadros de aviso, com ciência obrigatória de todos os colaboradores. Registrar em lista de presença.",
+    "empresa": "CD Embu",
+    "setor": "CD geral",
+    "nr": "NR-1 / NR-11",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "SESMT / Gestão",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-10",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#2",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 17,
+    "titulo": "Realizar DDS emergencial sobre segregação homem-máquina com TODOS os colaboradores",
+    "descricao": "Conduzir Diálogo Diário de Segurança específico sobre risco de atropelamento, área de elevação e comportamento seguro. Registrar presença de todos.",
+    "empresa": "CD Embu",
+    "setor": "CD geral",
+    "nr": "NR-11",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-06-10",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#3",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 18,
+    "titulo": "Elaborar e executar projeto de demarcação de vias — faixa amarela (empilhadeira) e faixa verde/branca (pedestre)",
+    "descricao": "Contratar empresa especializada para demarcação com tinta epóxi ou fita industrial. Faixa amarela = via empilhadeira; faixa verde/branca = via pedestre.",
+    "empresa": "CD Embu",
+    "setor": "Todos os corredores",
+    "nr": "NR-11 / NR-26",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "SESMT / Gestão",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#4",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 19,
+    "titulo": "Instalar sinalização proibitiva e de alerta nas entradas dos corredores com tráfego de empilhadeira",
+    "descricao": "Instalar placas: PROIBIDA ENTRADA DE PEDESTRES; ATENÇÃO – VEÍCULO EM MOVIMENTO; VELOCIDADE MÁXIMA 5 km/h. Conforme NR-26.",
+    "empresa": "CD Embu",
+    "setor": "Entradas de corredores",
+    "nr": "NR-11 / NR-26",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "Facilities / SESMT / Gestão",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#5",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 20,
+    "titulo": "Instalar sinalização de alerta de risco de queda de carga na área do mezanino",
+    "descricao": "Instalar placa RISCO DE QUEDA DE CARGA – MANTENHA DISTÂNCIA com pictograma. Aplicar faixa de atenção no piso delimitando zona de risco.",
+    "empresa": "CD Embu",
+    "setor": "Área frente ao mezanino",
+    "nr": "NR-11 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "Facilities / SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#6",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 21,
+    "titulo": "Instalar espelhos convexos de segurança em todos os cruzamentos de corredores cegos",
+    "descricao": "Instalar espelhos convexos (diâmetro mín. 400 mm, resistentes a impacto) nos cruzamentos com visibilidade limitada.",
+    "empresa": "CD Embu",
+    "setor": "Cruzamentos de corredores",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "Facilities / SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#7",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 22,
+    "titulo": "Instalar sinalização sonora/luminosa nos pontos de saída de corredor para área de packing",
+    "descricao": "Instalar pisca-alerta luminoso (giroflex fixo) e/ou buzina de aviso acionada pelo operador antes de sair do corredor.",
+    "empresa": "CD Embu",
+    "setor": "Saída corredor → packing",
+    "nr": "NR-11 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "Facilities / SESMT",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#8",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 23,
+    "titulo": "Elaborar e afixar POP de operação segura de empilhadeira (corredores e elevação no mezanino)",
+    "descricao": "Redigir POP contendo: velocidade máxima, proibição de pedestres, procedimento de elevação no mezanino, uso de EPI, checklist pré-operacional diário.",
+    "empresa": "CD Embu",
+    "setor": "CD geral",
+    "nr": "NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "SESMT / Facilities",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#9",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 24,
+    "titulo": "Realizar treinamento de reciclagem de todos os operadores de empilhadeira (NR-11)",
+    "descricao": "Programar treinamento teórico e prático conforme NR-11, com foco em: segregação homem-máquina, operação em corredores estreitos, elevação de cargas.",
+    "empresa": "CD Embu",
+    "setor": "CD geral",
+    "nr": "NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "SESMT / RH",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#10",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 25,
+    "titulo": "Instalar totens fixos com corrente retrátil na área de elevação do mezanino (solução definitiva)",
+    "descricao": "Substituir barreira temporária por totens fixos com corrente retrátil ou grade removível acionada pelo operador.",
+    "empresa": "CD Embu",
+    "setor": "Área frente ao mezanino",
+    "nr": "NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "Facilities / Engenharia",
+    "inicio": "2026-06-28",
+    "prazo": "2026-09-26",
+    "progresso": 0,
+    "obs": "Origem: NR-11 | NC#11",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 26,
+    "titulo": "Instalar extintor ausente no ponto sinalizado da Saída da Doca",
+    "descricao": "Adquirir e instalar extintor adequado (pó ABC ou água pressurizada) no suporte já existente. Verificar risco elétrico para definir agente correto.",
+    "empresa": "CD Embu",
+    "setor": "Saída da Doca",
+    "nr": "NR-23 / NBR 12693",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "Facilities / Manutenção",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#1",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 27,
+    "titulo": "Regularizar extintor do Gerador Externo — etiqueta de recarga",
+    "descricao": "Acionar empresa de manutenção para inspeção, recarga se necessário e emissão de etiqueta de validade. Fixar etiqueta no cilindro.",
+    "empresa": "CD Embu",
+    "setor": "Gerador Externo (área externa)",
+    "nr": "NR-23 / NBR 12693",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "Empresa de extintores habilitada",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#2",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 28,
+    "titulo": "Remover obstruções dos extintores — Rua 05, Rua 07 e Gaiola A4",
+    "descricao": "Retirar postes, paletes e bins que obstruem o acesso. Orientar equipe sobre proibição de bloqueio. Demarcar área livre mínima de 1 m.",
+    "empresa": "CD Embu",
+    "setor": "Rua 05 / Rua 07 / Gaiola A4",
+    "nr": "NR-23",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "Operação / Facilities",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#3",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 29,
+    "titulo": "Providenciar chave de manobra faltante no hidrante do Setor Checkin",
+    "descricao": "Adquirir e fixar chave storz compatível. Registrar no livro de manutenção. Verificar demais armários.",
+    "empresa": "CD Embu",
+    "setor": "Setor Checkin — lateral direita",
+    "nr": "NR-23 / IT-17 CBPMESP",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "Facilities / Manutenção",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#4",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 30,
+    "titulo": "Solucionar catraca na saída de emergência da portaria",
+    "descricao": "Instalar fail-safe (abertura automática por alarme/energia) ou criar rota alternativa. Instalar placa de saída de emergência fotoluminescente.",
+    "empresa": "CD Embu",
+    "setor": "Portaria — Saída de Emergência",
+    "nr": "NR-23 / IT-11 CBPMESP",
+    "risco": "Crítico",
+    "status": "Aberta",
+    "responsavel": "Facilities / Condomínio",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#5",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 31,
+    "titulo": "Instalar demarcação de piso em todos os pontos de extintor sem marcação (~14 pontos)",
+    "descricao": "Aplicar fita ou pintura: área interna em vermelho (mín. 1 m²) com borda amarela conforme IT-16/2019 CBPMESP.",
+    "empresa": "CD Embu",
+    "setor": "Geral — CD interno",
+    "nr": "NR-23 / IT-16 CBPMESP",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "Facilities / Manutenção",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#6",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 32,
+    "titulo": "Instalar placas fotoluminescentes sobre extintores sem sinalização",
+    "descricao": "Instalar placas fotoluminescentes IT-16 a 1,80–3,00 m do piso acima de cada ponto. Usar placas Classe B (mínimo) para depósitos.",
+    "empresa": "CD Embu",
+    "setor": "Setor Picking / Entradas de Ruas",
+    "nr": "NR-23 / IT-16 CBPMESP",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "Facilities / Manutenção",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#7",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 33,
+    "titulo": "Avaliar adequação do agente extintor na área do carregador de bateria",
+    "descricao": "Avaliar substituição de 1 extintor de água por CO₂ para risco elétrico. Manter água para risco classe A adjacente.",
+    "empresa": "CD Embu",
+    "setor": "Carregador de Bateria / Doca",
+    "nr": "NR-23 / NBR 12693",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "SESMT / Facilities",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#8",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 34,
+    "titulo": "Verificar e regularizar fixação de extintores sem suporte adequado",
+    "descricao": "Identificar pontos com extintor direto no piso. Instalar cavaletes ou fixação em parede. NBR 12693 exige suspensão ou suporte específico.",
+    "empresa": "CD Embu",
+    "setor": "Pontos diversos — CD interno",
+    "nr": "NR-23 / NBR 12693",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "Facilities / Manutenção",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#9",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 35,
+    "titulo": "Elaborar e implantar projeto de sinalização de rotas de fuga",
+    "descricao": "Contratar RT para levantamento e projeto conforme IT-16 e IT-18 CBPMESP. Instalar placas fotoluminescentes em toda extensão dos corredores.",
+    "empresa": "CD Embu",
+    "setor": "CD interno — todo o galpão",
+    "nr": "NR-23 / IT-16 / IT-18 CBPMESP",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "Resp. Técnico (Eng./Arq.)",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#10",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 36,
+    "titulo": "Contratar RT e protocolar FAT / atualização do PPCI no CBPMESP",
+    "descricao": "Contratar Eng./Arq. com especialização em SPCI para atualizar o PPCI com novo layout. Protocolar FAT junto ao CBPMESP com nova ART/RRT.",
+    "empresa": "CD Embu",
+    "setor": "Administrativo / CD geral",
+    "nr": "PPCI / Dec. Est. SP nº 63.911/2018",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "Gestão / Facilities",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#11",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 37,
+    "titulo": "Revisar e atualizar o PAE do condomínio com o novo layout",
+    "descricao": "Solicitar ao condomínio atualização do PAE para refletir o novo layout, incluindo pontos de encontro, rotas e distribuição de extintores.",
+    "empresa": "CD Embu",
+    "setor": "Administrativo / Condomínio",
+    "nr": "NR-23",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "Gestão / Condomínio",
+    "inicio": "2026-06-28",
+    "prazo": "2026-09-26",
+    "progresso": 0,
+    "obs": "Origem: NR-23 | NC#12",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 38,
+    "titulo": "Sinalização de segurança está adequada ? (placa de velocidade, faixa de pedestres, existe placas ...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 1 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 39,
+    "titulo": "A iluminação geral da unidade é adequada e existe comprovação mediante laudo de iluminância (LU)X...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Em andamento",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 30,
+    "obs": "Auditoria PEA Ago/2025 | Item 2 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 40,
+    "titulo": "Área de transito de pedestres delimitada e separada do transito de veículos (empilhadeiras e carr...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 5 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 41,
+    "titulo": "As escadas fixas possuem corrimão, são antiderrapantes e possuem sinalização de \"use o corrimão\"",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 6 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 42,
+    "titulo": "As escadas marinheiro possuem sistema que impeça o acesso por pessoas não autorizadas, estão sina...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Baixo",
+    "status": "Em andamento",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 30,
+    "obs": "Auditoria PEA Ago/2025 | Item 7 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 43,
+    "titulo": "Os locais que exigem guarda corpo possuem a devida proteção",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 10 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 44,
+    "titulo": "Nos locais de pontos cegos e cruzamentos com pouca visibilidade exitem espelhos convexos ou todas...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 11 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 45,
+    "titulo": "As docas que são utilizadas para carga e descarga com empilhadeira estão adequadas",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Médio",
+    "status": "Em andamento",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 30,
+    "obs": "Auditoria PEA Ago/2025 | Item 12 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 46,
+    "titulo": "Todas as docas possuem calços para rodas disponíveis em quantidade adequada",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Concluída",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 100,
+    "obs": "Auditoria PEA Ago/2025 | Item 13 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 47,
+    "titulo": "Não há fiações elétricas expostas e as tomadas estão todas identificadas",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 14 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 48,
+    "titulo": "Os locais de intervenção ou manutenção nas linhas possuem acesso adequado (escada, linha de vida,...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 15 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 49,
+    "titulo": "Os porta paletes simples (fileira única) em passagem de pessoas possuem stopper e tela para prote...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 16 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 50,
+    "titulo": "As linhas de vida existentes da unidade estão adequadas para uso e possuem uma sistemática de ins...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Baixo",
+    "status": "Em andamento",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 30,
+    "obs": "Auditoria PEA Ago/2025 | Item 17 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 51,
+    "titulo": "As portas das docas estão adequadas, sem riscos de quedas e com as manutenções periódicas realizadas",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Médio",
+    "status": "Concluída",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 100,
+    "obs": "Auditoria PEA Ago/2025 | Item 18 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 52,
+    "titulo": "Área de baterias possui dique de contenção, sistema de exaustão e lava olhos em condições de uso",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 19 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 53,
+    "titulo": "As docas possuem sistema de iluminação do interior da carreta adequado",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 20 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 54,
+    "titulo": "Demarcações de piso em geral estão adequadas e em bom estado",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 21 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 55,
+    "titulo": "As áreas externas possuem sinalização de piso nas docas pintadas adequadamente",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Médio",
+    "status": "Em andamento",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 30,
+    "obs": "Auditoria PEA Ago/2025 | Item 22 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 56,
+    "titulo": "Sanitários e restaurante em condições de segurança e limpeza adequados",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Médio",
+    "status": "Concluída",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 100,
+    "obs": "Auditoria PEA Ago/2025 | Item 23 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 57,
+    "titulo": "As posições do porta palete com restrição encontram-se bloqueadas tanto no sistema quanto in loco",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 25 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 58,
+    "titulo": "OS DOCK-LOCKS possui manutenção periódica, e mesmo está sendo cumprido",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 26 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 59,
+    "titulo": "É cumprida a determinação da não utilização de carregamento e descarregamento de sider com equipa...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 27 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 60,
+    "titulo": "Unidade determinou e provisionou os recursos necessários para o estabelecimento, implementação, m...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Instalações",
+    "nr": "NR-11 / NR-17 / NR-26",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 28 — Instalações",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 61,
+    "titulo": "As ferramentas estão organizadas e em boas condições? Área limpa e organizada",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 1 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 62,
+    "titulo": "A área de manutenção possui controle das ordem de manutenção e etiquetas verdes levantadas de con...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 2 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 63,
+    "titulo": "Os colaboradores controlam seus exames e treinamentos através de planilha em gestão à vista ou se...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Em andamento",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 30,
+    "obs": "Auditoria PEA Ago/2025 | Item 3 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 64,
+    "titulo": "Os colaboradores da manutenção conhecem as regras que salvam vidas",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Concluída",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 100,
+    "obs": "Auditoria PEA Ago/2025 | Item 4 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 65,
+    "titulo": "O DDS está sendo realizado em todo inicio do turno",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 5 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 66,
+    "titulo": "São cumpridas as determinações do PR -1044 /POP 03442(Inspeção de Ferramentas  e escadas ( Natura...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 6 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 67,
+    "titulo": "O acesso é restrito apenas a pessoas autorizadas na oficina",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 7 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 68,
+    "titulo": "Produtos inflamáveis são armazenados em armários corta-fogo com o aterramento realizado",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Em andamento",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 30,
+    "obs": "Auditoria PEA Ago/2025 | Item 8 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 69,
+    "titulo": "Existe um plano de manutenção preventiva para as máquinas e linhas da operação? Ele está sendo cu...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Concluída",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 100,
+    "obs": "Auditoria PEA Ago/2025 | Item 9 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 70,
+    "titulo": "Todos os painéis elétricos são sinalizados e mantidos devidamente fechados e trancados, sendo ace...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 10 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 71,
+    "titulo": "As embalagens dos produtos inflamáveis e químicos estão devidamente identificadas e as FISPQs est...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 11 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 72,
+    "titulo": "A sinalização de EPIs necessários para as atividades e áreas está correta",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-05",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 12 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 73,
+    "titulo": "Os colaboradores conhecem e aplicam o procedimento de LOTO conforme STD 4711",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Em andamento",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-07-28",
+    "progresso": 30,
+    "obs": "Auditoria PEA Ago/2025 | Item 13 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 74,
+    "titulo": "Existe um plano de inspeção e manutenção das portas das docas e rampas niveladoras e o mesmo está...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Concluída",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 100,
+    "obs": "Auditoria PEA Ago/2025 | Item 14 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 75,
+    "titulo": "Pelo menos um representante da manutenção participa das reuniões do comitê de segurança da unidade",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 15 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 76,
+    "titulo": "Os colaboradores conhecem e aplicam a APR, PT e  avaliação 360 de segurança? Conforme STD 02227",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Manutenção",
+    "nr": "NR-12 / NR-10",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 16 — Manutenção",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 77,
+    "titulo": "As partes móveis de máquinas ou equipamentos onde é possível acessar o seu interior estão devidam...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Máquinas e Procedimentos",
+    "nr": "NR-12 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 1 — Máquinas e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 78,
+    "titulo": "As máquinas, equipamentos e estruturas em geral não possuem bordas cortantes ou pontiagudas ou as...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Máquinas e Procedimentos",
+    "nr": "NR-12 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 2 — Máquinas e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 79,
+    "titulo": "As máquinas e ferramentas estão em boas condições de uso e sem adaptações",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Máquinas e Procedimentos",
+    "nr": "NR-12 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 3 — Máquinas e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 80,
+    "titulo": "As empilhadeiras e paleteiras possuem proteção frontal contra projeção de materiais ou os empilha...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Máquinas e Procedimentos",
+    "nr": "NR-12 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 4 — Máquinas e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 81,
+    "titulo": "Existe um plano de manutenção para máquinas e equipamentos (empilhadeira, paleteira, transpaletei...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Máquinas e Procedimentos",
+    "nr": "NR-12 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 5 — Máquinas e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 82,
+    "titulo": "O estado de conservação das empilhadeiras e carrinhos hidráulicos está adequado",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Máquinas e Procedimentos",
+    "nr": "NR-12 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 6 — Máquinas e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 83,
+    "titulo": "O padrão de altura máxima de empilhamento de pallets está estabelecido no CD (max. 12 paletes arm...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 1 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 84,
+    "titulo": "Existe regra que garanta a coleta da chave do motorista estacionado nas docas durante a carga e d...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 2 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 85,
+    "titulo": "Existe regra que estabeleça o armazenamento de paletes somente em locais demarcados e a mesma é d...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 3 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 86,
+    "titulo": "A unidade estabeleceu, implementou, controla e mantém processos para uso e aplicação de medidas d...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 4 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 87,
+    "titulo": "As regras gerais de segurança da unidade são comunicadas aos motoristas através da entrega de fol...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 5 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 88,
+    "titulo": "Existe identificação para novos colaboradores e o procedimento de padrinho é aplicado para estes",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 6 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 89,
+    "titulo": "Existe procedimento implantado que garanta trânsito de pallets duplados somente de ré - quando nã...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 7 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 90,
+    "titulo": "Existe procedimento que garanta a ausência de pessoas ou auxiliares de manobra dos caminhões no p...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 8 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 91,
+    "titulo": "É cumprida a proibição do uso de chapas (colaboradores informais), e todos os ajudantes passam po...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 9 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 92,
+    "titulo": "Os operadores de máquinas conhecem e aplicam o procedimento de LOTO conforme STD 4711",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 10 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 93,
+    "titulo": "Existe procedimento para o fechamento de ruas durante a atividade de compras e os colaboradores c...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 11 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 94,
+    "titulo": "Existe procedimento que estabeleça que o carregamento manual com paleteira deve ser realizado som...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 13 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 95,
+    "titulo": "Existe check list de pré uso das empilhadeiras, paleteiras, carrinhos hidráulicos e talhas? Estão...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 14 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 96,
+    "titulo": "Os colaboradores que realizam atividades críticas - altura, eletricidade, operação de máquinas e ...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 15 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 97,
+    "titulo": "A Unidade conhece e foi treinada na Politica de Saúde e Segurança",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 17 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 98,
+    "titulo": "Produtos inflamáveis e químicos são armazenados somente nos locais determinados (armário corta fo...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 18 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 99,
+    "titulo": "As embalagens dos produtos inflamáveis e químicos estão devidamente identificados e as Fichas de ...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 19 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 100,
+    "titulo": "É aplicada a regra de proibição a equipe de limpeza para realizar a mistura e ou diluição de prod...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 20 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 101,
+    "titulo": "A armazenagem de materiais de forma geral está estável e segura, não havendo pilhas tortas ou pal...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 21 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 102,
+    "titulo": "Os colaboradores manipulam corretamente as paleteiras manuais (sempre abaixam a paleteira quando ...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 22 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 103,
+    "titulo": "A perigos e avaliação de riscos e se está efetivamente implementada e conhecida pelos líderes e c...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 23 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 104,
+    "titulo": "É cumprido na integra uso da regra do celulares nas operações Natura &co. NM 2091/ STD 3796 (não ...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 24 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 105,
+    "titulo": "Existe procedimento que proibe os colaboradores de caminharem sobre os pallets e o mesmo está sen...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 25 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 106,
+    "titulo": "Os colaboradores respeitam as áreas delimitadas para circulação de pedestres",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 26 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 107,
+    "titulo": "Existe procedimento que determina a distância mínima de 2 metros entre pedestres e máquinas em mo...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Regras e Procedimentos",
+    "nr": "NR-1 / NR-11",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 27 — Regras e Procedimentos",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 108,
+    "titulo": "Os colaboradores conhecem os requisitos de segurança e saúde ocupacional e regras que salvam vida...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 1 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 109,
+    "titulo": "Todas as inspeções planejadas de segurança foram realizadas e respeitaram o cronograma previsto p...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 2 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 110,
+    "titulo": "A liderança (TST + dois níveis mais altos) do Operador Logístico realiza FOCO no mínimo uma vez p...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 3 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 111,
+    "titulo": "Existem processos que assegurem que colaboradores, terceiros e prestadores de serviços estejam pr...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 5 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 112,
+    "titulo": "A Observação Preventiva de Segurança (OPS) está implementada e os colaboradores conhecem a ferram...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 6 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 113,
+    "titulo": "Os laudos de insalubridade e periculosidade da unidade estão atualizados",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 9 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 114,
+    "titulo": "Todos os quase acidentes estão com a devida tratativa? Os colaboradores têm conhecimento dos acid...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 10 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 115,
+    "titulo": "É realizado DDS (Diálogo Diário de Segurança) nas áreas abrangendo todos os colaboradores e prest...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 11 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 116,
+    "titulo": "Existe uma sistemática que garanta que todo prestador somente inicie suas atividades após a reali...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 12 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 117,
+    "titulo": "Existe uma sistemática efetiva de gestão de terceiros na Unidade? Ver integração com apresentação...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 13 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 118,
+    "titulo": "Existe um comitê de segurança de prestadores de serviço da unidade, com reuniões periódicas (mín....",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 14 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 119,
+    "titulo": "O Laudo ergonômico do Operador logístico, bem como o plano de ação do mesmo  operações com funcio...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 15 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 120,
+    "titulo": "A gestão do comitê paritario(CIPA) está adequada  (processo eleitoral, ATAs de posse e reuniões)",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 16 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 121,
+    "titulo": "Os indicadores de segurança (reativos e pró-ativos) são divulgados e estão disponíveis para consu...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 17 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 122,
+    "titulo": "Os resultados dos processos de reconhecimento de segurança foram comunicados a todos da organizaç...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 18 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 123,
+    "titulo": "Foram estabelecidos, implementados e mantidos processos formais de reconhecimento de segurança fr...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 19 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 124,
+    "titulo": "Existe uma matriz de treinamentos obrigatórios e de segurança (operação de máquinas, operação de ...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 20 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 125,
+    "titulo": "O PGR ( Programa de gerenciamento de riscos)do Operador Logístico e/ou unidade Natura &co. encont...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 22 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 126,
+    "titulo": "Foram estabelecidos, implementados e mantidos processos formais de reconhecimento de segurança fr...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 23 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 127,
+    "titulo": "O mapa de LOTO está disponível nas máquinas e equipamentos e está atualizado",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 24 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 128,
+    "titulo": "A chave das empilhadeiras é guardada em claviculário com controle.",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 25 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 129,
+    "titulo": "Existe uniformes ou x refletivos harmonizado para colaboradores do estoque",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de Segurança",
+    "nr": "NR-1 / NR-9 (PPRA)",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 25 — Gestão de Segurança",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 130,
+    "titulo": "Existe um plano de simulados e o mesmo está sendo cumprido e as ações provenientes do mesmo possu...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Plano de Emergências",
+    "nr": "NR-23",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 4 — Plano de Emergências",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 131,
+    "titulo": "Existe um plano de inspeção e manutenção dos sistemas de combate a incêndio (extintor, hidrante, ...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Plano de Emergências",
+    "nr": "NR-23",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 5 — Plano de Emergências",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 132,
+    "titulo": "Existem chuveiros lava olhos nos locais de maior risco (sala de baterias/sala da qualidade) e os ...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Plano de Emergências",
+    "nr": "NR-23",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 8 — Plano de Emergências",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 133,
+    "titulo": "As mangueiras dos hidrantes estão com os testes hidrostáticos realizados e válidos",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Plano de Emergências",
+    "nr": "NR-23",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 11 — Plano de Emergências",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 134,
+    "titulo": "Os Extintores estão numerados e possuem verificação mensal realizada? possuem lacre e pino de seg...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Plano de Emergências",
+    "nr": "NR-23",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 15 — Plano de Emergências",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 135,
+    "titulo": "Os Hidrantes estão numerados e possuem verificação mensal realizada",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Plano de Emergências",
+    "nr": "NR-23",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 17 — Plano de Emergências",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 136,
+    "titulo": "As mangueiras dos hidrantes estão com os testes hidrostáticos realizados e válidos",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Plano de Emergências",
+    "nr": "NR-23",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 18 — Plano de Emergências",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 137,
+    "titulo": "Os EPIs atendem as necessidades de acordo as atividades realizadas",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de EPIs",
+    "nr": "NR-6",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 2 — Gestão de EPIs",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 138,
+    "titulo": "O treinamento de EPI foi aplicado para todos os colaboradores? Há evidências e registros",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de EPIs",
+    "nr": "NR-6",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 4 — Gestão de EPIs",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 139,
+    "titulo": "Os colaboradores conhecem todos os EPIs obrigatórios para suas atividades",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de EPIs",
+    "nr": "NR-6",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 6 — Gestão de EPIs",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 140,
+    "titulo": "Os colaboradores utilizam os EPIs corretamente",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de EPIs",
+    "nr": "NR-6",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 7 — Gestão de EPIs",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 141,
+    "titulo": "A sinalização para uso de EPIs está disponível nas áreas de acordo com os riscos das atividades",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de EPIs",
+    "nr": "NR-6",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 8 — Gestão de EPIs",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 142,
+    "titulo": "A guarda dos EPIs está sendo realizada corretamente",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Gestão de EPIs",
+    "nr": "NR-6",
+    "risco": "Médio",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 9 — Gestão de EPIs",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 143,
+    "titulo": "O responsável pela área de transportes participa efetivamente do Comitê de Segurança da Unidade",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 1 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 144,
+    "titulo": "Os colaboradores manipulam corretamente as paleteiras manuais (sempre abaixam a paleteira quando ...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 2 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 145,
+    "titulo": "Todos os colaboradores das transportadoras passam por integração de segurança antes de iniciar su...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 3 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 146,
+    "titulo": "Todos os colaboradores utilizam os EPIs (mínimo sapato de segurança e luva) para executar suas at...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 4 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 147,
+    "titulo": "Os colaboradores conhecem e aplicam as ferramentas de segurança (etiqueta verde, OPS)",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 5 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 148,
+    "titulo": "A liderança Natura & Co realiza inspeções planejadas de segurança (mínimo 1 por mês) na área de t...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 8 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 149,
+    "titulo": "A liderança Natura & Co realiza FOCO (mínimo 1 por mês) na área de transportes",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 9 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 150,
+    "titulo": "Existe algum material avariado ou que possa trazer riscos à operação( Exemplo palete quebrados, c...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 10 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 151,
+    "titulo": "As paleteiras manuais estão em bom estado e são inspecionadas diariamente",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Baixo",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 11 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 152,
+    "titulo": "Os pallets estão armazenados de forma segura em locais demarcados",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 12 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 153,
+    "titulo": "Os operadores de empilhadeira/transpaleteira são capacitados e possuem crachá de autorização cons...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 13 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 154,
+    "titulo": "Existe uma matriz de treinamentos obrigatórios e de segurança ( operação de máquinas, operação de...",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 14 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 155,
+    "titulo": "Os motoristas tem conhecimento das regras de segurança que recebem na portaria",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 15 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  },
+  {
+    "id": 156,
+    "titulo": "É cumprido a regras de não realizar manutenções nos veículos dentro dos CDs",
+    "descricao": "",
+    "empresa": "CD Manaus",
+    "setor": "Transportes",
+    "nr": "NR-11",
+    "risco": "Alto",
+    "status": "Aberta",
+    "responsavel": "William Leal",
+    "inicio": "2026-06-28",
+    "prazo": "2026-08-27",
+    "progresso": 0,
+    "obs": "Auditoria PEA Ago/2025 | Item 16 — Transportes",
+    "linkBefore": "",
+    "linkAfter": ""
+  }
+];
+
+let dados = [];
+// ── FIREBASE CONFIG ──────────────────────────────────────────
+const FB_CONFIG = {
+  apiKey: "AIzaSyDoVzHd8_-WAfl-3efYqsUq4Okti-BD4F8",
+  authDomain: "controle-de-acesso---cd-manaus.firebaseapp.com",
+  databaseURL: "https://controle-de-acesso---cd-manaus-default-rtdb.firebaseio.com",
+  projectId: "controle-de-acesso---cd-manaus",
+  storageBucket: "controle-de-acesso---cd-manaus.firebasestorage.app",
+  messagingSenderId: "291376709183",
+  appId: "1:291376709183:web:9d8bdeebf6a83f9b53828a",
+  measurementId: "G-PYZ1SW73F8"
+};
+const FB_COLLECTION = 'sso_demandas';
+let db = null;
+
+function initFirebase(){
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    db = firebase.firestore();
+    // listener em tempo real — atualiza todas as abas automaticamente
+    db.collection(FB_COLLECTION).onSnapshot(snap => {
+      dados = snap.docs.map(doc => ({ _fbid: doc.id, ...doc.data() }));
+      demRender();
+      if($('page-gantt').classList.contains('active')) ganttBuild();
+      if($('page-indicadores').classList.contains('active')) indRender();
+      setStatus('online');
+    }, err => {
+      console.warn('Firestore onSnapshot error:', err);
+      setStatus('offline');
+      loadLocalFallback();
+    });
+  } catch(e) {
+    console.warn('Firebase init error:', e);
+    setStatus('offline');
+    loadLocalFallback();
+  }
+}
+
+function setStatus(s){
+  const dot=$('status-dot');
+  if(!dot) return;
+  if(s==='online'){
+    dot.style.background='var(--green)';
+    dot.style.boxShadow='0 0 8px var(--green)';
+    dot.title='Firebase conectado';
+  } else {
+    dot.style.background='var(--orange)';
+    dot.style.boxShadow='0 0 8px var(--orange)';
+    dot.title='Modo offline (localStorage)';
+  }
+}
+
+function loadLocalFallback(){
+  const s = localStorage.getItem('sso_v2');
+  dados = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEMO_DATA));
+  demRender();
+}
+
+function nextId(){
+  return dados.length ? Math.max(...dados.map(d => typeof d.id==='number' ? d.id : 0))+1 : 1;
+}
+
+// Chamadas de gravação — Firebase primeiro, localStorage como fallback
+async function saveDoc(obj){
+  if(db){
+    try {
+      const fbid = obj._fbid;
+      const payload = {...obj}; delete payload._fbid;
+      if(fbid){
+        await db.collection(FB_COLLECTION).doc(fbid).set(payload);
+      } else {
+        await db.collection(FB_COLLECTION).add(payload);
+      }
+      // onSnapshot atualiza o array `dados` automaticamente
+      return;
+    } catch(e){ console.warn('Firestore write error:', e); }
+  }
+  // fallback localStorage
+  localStorage.setItem('sso_v2', JSON.stringify(dados));
+  demRender();
+}
+
+async function deleteDoc(fbid, localId){
+  if(db && fbid){
+    try {
+      await db.collection(FB_COLLECTION).doc(fbid).delete();
+      return;
+    } catch(e){ console.warn('Firestore delete error:', e); }
+  }
+  // fallback
+  dados = dados.filter(x => x.id !== localId);
+  localStorage.setItem('sso_v2', JSON.stringify(dados));
+  demRender(); ganttBuild(); indRender();
+}
+
+// Mantém loadData e saveData como aliases para não quebrar nada
+function loadData(){ loadLocalFallback(); }
+function saveData(){ localStorage.setItem('sso_v2', JSON.stringify(dados)); }
+
+/* ─────────────────────────────────────────────────────────────
+   NAVEGAÇÃO POR ABAS
+───────────────────────────────────────────────────────────── */
+function showPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  $(`page-${page}`).classList.add('active');
+  $(`nav-${page}`).classList.add('on');
+  // re-renderiza a aba ao entrar
+  if(page==='gantt') ganttBuild();
+  if(page==='indicadores') indRender();
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CLOCK
+───────────────────────────────────────────────────────────── */
+function tick(){ $('clock').textContent = new Date().toLocaleTimeString('pt-BR'); }
+
+/* ─────────────────────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────────────────────── */
+function toast(msg,type){
+  const t=$('toast'); t.textContent=msg; t.className=`toast ${type||''}`;
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ABA 1 — DEMANDAS
+═══════════════════════════════════════════════════════════ */
+let demEmpFilter='', demSortCol='', demSortAsc=true;
+
+function demSetEmp(btn){
+  document.querySelectorAll('.emp-btn').forEach(b=>b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  demEmpFilter=btn.dataset.val;
+  demRender();
+}
+
+function demGetStatus(d){
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  if(d.status==='Concluída') return 'Concluída';
+  if(d.prazo && new Date(d.prazo)<hoje) return 'Vencida';
+  return d.status;
+}
+
+function demGetFiltered(){
+  const st=$('f-status').value, ri=$('f-risco').value;
+  const nr=$('f-nr').value.toLowerCase().trim(), bk=$('f-busca').value.toLowerCase();
+  let list=dados.filter(d=>{
+    if(demEmpFilter && d.empresa!==demEmpFilter) return false;
+    if(st && demGetStatus(d)!==st) return false;
+    if(ri && d.risco!==ri) return false;
+    if(nr && !(d.nr||'').toLowerCase().includes(nr)) return false;
+    if(bk && !d.titulo.toLowerCase().includes(bk) &&
+       !(d.descricao||'').toLowerCase().includes(bk) &&
+       !(d.setor||'').toLowerCase().includes(bk)) return false;
+    return true;
+  });
+  if(demSortCol) list.sort((a,b)=>{
+    const va=String(a[demSortCol]||'').toLowerCase(), vb=String(b[demSortCol]||'').toLowerCase();
+    return demSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  return list;
+}
+
+function demClearFilters(){
+  ['f-status','f-risco','f-nr'].forEach(id=>$(id).value='');
+  $('f-busca').value='';
+  demRender();
+}
+
+function demRenderStats(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const scope=demEmpFilter ? dados.filter(d=>d.empresa===demEmpFilter) : dados;
+  const total=scope.length;
+  const venc=scope.filter(d=>demGetStatus(d)==='Vencida').length;
+  const abert=scope.filter(d=>d.status==='Aberta').length;
+  const crit=scope.filter(d=>d.risco==='Crítico'&&demGetStatus(d)!=='Concluída').length;
+  const conc=scope.filter(d=>d.status==='Concluída').length;
+  const pct=total?Math.round(scope.reduce((s,d)=>s+d.progresso,0)/total):0;
+  $('stats-grid').innerHTML=`
+    <div class="stat"><div class="stat-lbl">Total</div><div class="stat-num">${String(total).padStart(2,'0')}</div><div class="stat-desc">demandas</div></div>
+    <div class="stat danger"><div class="stat-lbl">Vencidas</div><div class="stat-num">${String(venc).padStart(2,'0')}</div><div class="stat-desc">prazo expirado</div></div>
+    <div class="stat warn"><div class="stat-lbl">Abertas</div><div class="stat-num">${String(abert).padStart(2,'0')}</div><div class="stat-desc">não iniciadas</div></div>
+    <div class="stat danger"><div class="stat-lbl">Críticas</div><div class="stat-num">${String(crit).padStart(2,'0')}</div><div class="stat-desc">risco crítico</div></div>
+    <div class="stat ok"><div class="stat-lbl">Concluídas</div><div class="stat-num">${String(conc).padStart(2,'0')}</div><div class="stat-desc">finalizadas</div></div>
+    <div class="stat"><div class="stat-lbl">Progresso</div><div class="stat-num">${pct}%</div><div class="stat-desc">média geral</div></div>`;
+}
+
+function demRender(){
+  demRenderStats();
+  const list=demGetFiltered();
+  const today=new Date(); today.setHours(0,0,0,0);
+  $('count-chip').textContent=list.length;
+  $('dem-empty').style.display=list.length?'none':'block';
+
+  const chiprisco={Baixo:'chip-baixo',Médio:'chip-medio',Alto:'chip-alto',Crítico:'chip-critico'};
+  const chipstatus={'Aberta':'chip-aberta','Em andamento':'chip-andamento','Concluída':'chip-concluida','Vencida':'chip-vencida'};
+
+  $('dem-tbody').innerHTML=list.map(d=>{
+    const prazo=d.prazo?new Date(d.prazo):null;
+    const st=demGetStatus(d);
+    const isVenc=st==='Vencida';
+    const isWarn=prazo&&!isVenc&&(prazo-today)<7*86400000&&st!=='Concluída';
+    const prazoClass=isVenc?'prazo-red':isWarn?'prazo-warn':'prazo-ok';
+    const prazoPrefix=isVenc?'⚠ ':isWarn?'⏰ ':'';
+    const empClass=d.empresa==='CD Manaus'?'chip-manaus':'chip-embu';
+    const rowClass=isVenc?'row-vencido':d.risco==='Crítico'?'row-critico':'';
+    const hasBefore=d.linkBefore&&d.linkBefore.startsWith('http');
+    const hasAfter=d.linkAfter&&d.linkAfter.startsWith('http');
+    const evid=`<span title="${hasBefore?'Before cadastrado':'Sem Before'}" style="font-size:14px;opacity:${hasBefore?1:.2}">🔴</span>
+      <span title="${hasAfter?'After cadastrado':'Sem After'}" style="font-size:14px;opacity:${hasAfter?1:.2}">🟢</span>`;
+    return `<tr class="${rowClass}">
+      <td>
+        <div class="td-main">${esc(d.titulo)}</div>
+        ${d.descricao?`<div class="td-desc">${esc(d.descricao)}</div>`:''}
+        ${d.setor?`<div class="td-sub">📍 ${esc(d.setor)}${d.responsavel?' · '+esc(d.responsavel):''}</div>`:''}
+      </td>
+      <td><span class="chip ${empClass}">${esc(d.empresa)}</span></td>
+      <td>${d.nr?`<span class="nr-chip">${esc(d.nr)}</span>`:'<span style="color:var(--t3)">—</span>'}</td>
+      <td><span class="chip ${chiprisco[d.risco]||''}">${esc(d.risco)}</span></td>
+      <td><span class="chip ${chipstatus[st]||'chip-aberta'}">${esc(st)}</span></td>
+      <td><span class="${prazoClass}">${prazoPrefix}${fmt(d.prazo)}</span></td>
+      <td>
+        <div class="prog-wrap">
+          <div class="prog-track"><div class="prog-fill" style="width:${d.progresso}%"></div></div>
+          <span class="prog-pct">${d.progresso}%</span>
+        </div>
+      </td>
+      <td><div style="display:flex;gap:4px;align-items:center">${evid}</div></td>
+      <td>
+        <div class="acoes">
+          <button class="btn-consultar" onclick="openModal(${d.id})">🔍 Consultar</button>
+          <button class="btn-del" onclick="demDel(${d.id})">✕</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function demSortBy(col,evt){
+  if(demSortCol===col) demSortAsc=!demSortAsc; else {demSortCol=col;demSortAsc=true;}
+  document.querySelectorAll('thead th').forEach(th=>th.classList.remove('sort-active'));
+  evt.currentTarget.classList.add('sort-active');
+  demRender();
+}
+
+function demDel(id){
+  const d=dados.find(x=>x.id===id);
+  if(!d||!confirm(`Excluir "${d.titulo}"?`)) return;
+  toast('Demanda removida.','');
+  deleteDoc(d._fbid, id);
+}
+
+function demExportCSV(){
+  const list=demGetFiltered();
+  const hdr=['Título','Descrição','Empresa','Setor','NR','Risco','Status','Responsável','Início','Prazo','Progresso (%)','Observações','Before','After'];
+  const rows=list.map(d=>[d.titulo,d.descricao,d.empresa,d.setor,d.nr,d.risco,d.status,d.responsavel,d.inicio,d.prazo,d.progresso,d.obs,d.linkBefore||'',d.linkAfter||'']
+    .map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv=[hdr.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=`demandas_sso_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); toast('CSV exportado.','ok');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL — compartilhado por Demandas e Gantt
+═══════════════════════════════════════════════════════════ */
+const NRS_MAP = {
+  'CD Manaus':['NR-1','NR-5 (CIPA)','NR-6 (EPI)','NR-7 (PCMSO)','NR-9 (PPRA)','NR-10','NR-11','NR-12','NR-15','NR-17','NR-20','NR-23','NR-33','NR-35'],
+  'CD Embu':  ['NR-1','NR-5 (CIPA)','NR-6 (EPI)','NR-7 (PCMSO)','NR-9 (PPRA)','NR-10','NR-11','NR-12','NR-15','NR-17','NR-23','NR-26','NR-33','NR-35']
+};
+const ALL_NRS=[...(new Set([...NRS_MAP['CD Manaus'],...NRS_MAP['CD Embu']]))].sort();
+
+let editId=null;
+
+function openModal(id=null){
+  editId=id;
+  $('modal-ttl').textContent=id?'Consultar / editar demanda':'Nova demanda';
+  const d=id?dados.find(x=>x.id===id):null;
+  $('m-titulo').value=d?.titulo||'';
+  $('m-desc').value=d?.descricao||'';
+  $('m-emp').value=d?.empresa||'';
+  $('m-setor').value=d?.setor||'';
+  $('m-risco').value=d?.risco||'';
+  $('m-status').value=d?.status||'Aberta';
+  $('m-resp').value=d?.responsavel||'';
+  $('m-inicio').value=d?.inicio||'';
+  $('m-prazo').value=d?.prazo||'';
+  $('m-prog').value=d?.progresso||0;
+  $('prog-val').textContent=(d?.progresso||0)+'%';
+  $('m-obs').value=d?.obs||'';
+  $('m-nr').value=d?.nr||'';
+  $('m-before').value=d?.linkBefore||'';
+  $('m-after').value=d?.linkAfter||'';
+  updateNRs(d?.nr||'');
+  previewLink('before'); previewLink('after');
+  $('overlay').classList.add('open');
+  setTimeout(()=>$('m-titulo').focus(),80);
+}
+
+function closeModal(){ $('overlay').classList.remove('open'); editId=null; }
+function maybeClose(e){ if(e.target===$('overlay')) closeModal(); }
+
+function updateNRs(sel=null){
+  const emp=$('m-emp').value, nrs=NRS_MAP[emp]||ALL_NRS;
+  if(sel!==null) $('m-nr').value=sel;
+  $('nr-picker').innerHTML='<span style="font-size:10px;color:var(--t3);margin-right:2px;align-self:center">Sugestões:</span>'+
+    nrs.map(nr=>`<span class="nr-pill" onclick="pickNR('${nr}')">${nr}</span>`).join('');
+}
+
+function pickNR(nr){
+  const inp=$('m-nr');
+  const cur=inp.value.trim();
+  const partes=cur?cur.split(',').map(s=>s.trim()):[];
+  if(!partes.includes(nr)) partes.push(nr);
+  inp.value=partes.join(', ');
+  inp.focus();
+}
+
+function previewLink(type){
+  const val=$(`m-${type}`).value.trim();
+  const isUrl=val.startsWith('http://','https://') || val.startsWith('https://');
+  const preview=$(`preview-${type}`), link=$(`link-${type}`);
+  if(val&&isUrl){
+    link.href=val;
+    try{link.textContent=new URL(val).hostname+'…';}catch{link.textContent=val.slice(0,35)+'…';}
+    preview.classList.add('vis');
+  } else { preview.classList.remove('vis'); }
+}
+
+function modalSave(){
+  const titulo=$('m-titulo').value.trim(), empresa=$('m-emp').value;
+  const risco=$('m-risco').value, prazo=$('m-prazo').value;
+  if(!titulo)  return toast('Informe o título.','err');
+  if(!empresa) return toast('Selecione a empresa.','err');
+  if(!risco)   return toast('Selecione o nível de risco.','err');
+  if(!prazo)   return toast('Informe o prazo.','err');
+
+  const obj={
+    id:editId||nextId(), titulo,
+    descricao:$('m-desc').value.trim(), empresa, setor:$('m-setor').value.trim(),
+    nr:$('m-nr').value, risco, status:$('m-status').value,
+    responsavel:$('m-resp').value.trim(), inicio:$('m-inicio').value, prazo,
+    progresso:parseInt($('m-prog').value)||0, obs:$('m-obs').value.trim(),
+    linkBefore:$('m-before').value.trim(), linkAfter:$('m-after').value.trim(),
+  };
+
+  if(editId){
+    const i=dados.findIndex(x=>x.id===editId);
+    if(i>=0){ obj._fbid=dados[i]._fbid; dados[i]=obj; }
+    toast('Demanda salva.','ok');
+  } else {
+    dados.push(obj); toast('Demanda cadastrada.','ok');
+  }
+  saveDoc(obj);
+  closeModal();
+  // onSnapshot vai re-renderizar; fallback imediato se offline
+  if(!db){ demRender(); ganttBuild(); indRender(); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ABA 2 — GANTT
+═══════════════════════════════════════════════════════════ */
+const DW=52;
+let ganttJAN={};
+
+function hexA(hex,a){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return`rgba(${r},${g},${b},${a})`;
+}
+
+function ganttBuild(){
+  const fe=$('g-fe').value, fr=$('g-fr').value, fs=$('g-fs').value;
+  const meses=parseInt($('g-fp').value);
+  const lista=dados.filter(d=>{
+    if(!d.inicio||!d.prazo) return false;
+    if(fe&&d.empresa!==fe) return false;
+    if(fr&&d.risco!==fr) return false;
+    if(fs&&d.status!==fs) return false;
+    return true;
+  });
+
+  $('empty-gantt').style.display=lista.length?'none':'block';
+  $('gtable').style.display=lista.length?'':'none';
+  if(!lista.length){
+    $('gthead').innerHTML='';$('gtbody').innerHTML='';
+    const cg=$('gtable').querySelector('colgroup'); if(cg) cg.remove();
+    return;
+  }
+
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const minDt=lista.map(d=>new Date(d.inicio)).reduce((a,b)=>a<b?a:b,hoje);
+  const iniRef=new Date(Math.min(minDt.getTime(),new Date(hoje.getFullYear(),hoje.getMonth()-1,1).getTime()));
+  const ini=new Date(iniRef.getFullYear(),iniRef.getMonth(),1);
+  const fim=new Date(ini.getFullYear(),ini.getMonth()+meses,0);
+  const totalDias=Math.round((fim-ini)/86400000)+1;
+  ganttJAN={ini,fim,totalDias};
+
+  const dias=[];
+  for(let i=0;i<totalDias;i++){
+    const dt=new Date(ini.getTime()+i*86400000);
+    dias.push({dt,dow:dt.getDay(),isHoje:dt.getTime()===hoje.getTime(),idx:i});
+  }
+
+  /* colgroup garante larguras fixas independente de qualquer CSS global */
+  const tbl=$('gtable');
+  const cgOld=tbl.querySelector('colgroup'); if(cgOld) cgOld.remove();
+  const cg=document.createElement('colgroup');
+  const colLbl=document.createElement('col'); colLbl.style.cssText='width:300px;min-width:300px;';
+  cg.appendChild(colLbl);
+  dias.forEach(()=>{
+    const col=document.createElement('col');
+    col.style.cssText='width:'+DW+'px;min-width:'+DW+'px;max-width:'+DW+'px;';
+    cg.appendChild(col);
+  });
+  tbl.insertBefore(cg,tbl.firstChild);
+
+  /* THEAD */
+  const thead=$('gthead'); thead.innerHTML='';
+
+  /* linha 1: label + meses (colspan) */
+  const tr1=ce('tr');
+  const thLbl=ce('th'); thLbl.className='col-lbl'; thLbl.textContent='Demanda';
+  tr1.appendChild(thLbl);
+  let cur=new Date(ini.getFullYear(),ini.getMonth(),1);
+  while(cur<=fim){
+    const fimMes=new Date(cur.getFullYear(),cur.getMonth()+1,0);
+    const d0=Math.max(0,Math.round((cur-ini)/86400000));
+    const d1=Math.min(totalDias-1,Math.round((fimMes-ini)/86400000));
+    const span=d1-d0+1;
+    const th=ce('th');
+    th.className='col-mes'+(cur.getMonth()===hoje.getMonth()&&cur.getFullYear()===hoje.getFullYear()?' cur':'');
+    th.colSpan=span;
+    th.textContent=MESES[cur.getMonth()]+' '+cur.getFullYear();
+    tr1.appendChild(th);
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+  }
+  thead.appendChild(tr1);
+
+  /* linha 2: dias — usa .gt-day isolado do CSS global de thead th */
+  const tr2=ce('tr');
+  const thLbl2=ce('th'); thLbl2.className='col-lbl gt-day-lbl';
+  tr2.appendChild(thLbl2);
+  dias.forEach(({dt,dow,isHoje})=>{
+    const th=ce('th');
+    let cls='gt-day';
+    if(dow===0||dow===6) cls+=' gt-day-we';
+    if(isHoje) cls+=' gt-day-hoje';
+    th.className=cls;
+    th.textContent=dt.getDate();
+    tr2.appendChild(th);
+  });
+  thead.appendChild(tr2);
+
+  /* TBODY */
+  const tbody=$('gtbody'); tbody.innerHTML='';
+  const grupos={};
+  lista.forEach(d=>{(grupos[d.empresa]=grupos[d.empresa]||[]).push(d);});
+
+  Object.entries(grupos).forEach(([emp,items])=>{
+    const ec=emp==='CD Manaus'?'#63b3ed':'#a29bfe';
+    const trg=ce('tr'); trg.className='grp-row';
+    const tdg=ce('td'); tdg.className='col-lbl grp';
+    tdg.innerHTML=`<div class="grp-name"><span style="color:${ec}">${esc(emp)}</span><span class="grp-tag" style="background:${ec}22;color:${ec}">${items.length}</span></div>`;
+    trg.appendChild(tdg);
+    dias.forEach(({dow,isHoje})=>{
+      const td=ce('td'); td.className='col-dia'+(dow===0||dow===6?' we':'')+(isHoje?' hoje':'');
+      if(isHoje){const lbl=ce('div');lbl.className='hoje-lbl';lbl.textContent='HOJE';td.appendChild(lbl);}
+      trg.appendChild(td);
+    });
+    tbody.appendChild(trg);
+
+    items.forEach(d=>{
+      const cor=COR_RISCO[d.risco]||'#8892a4';
+      const venc=new Date(d.prazo)<hoje&&d.status!=='Concluída';
+      const iIni=Math.round((new Date(d.inicio)-ini)/86400000);
+      const iFim=Math.round((new Date(d.prazo)-ini)/86400000);
+      const anchorIdx=Math.max(0,iIni);
+      const barW=(iFim-iIni+1)*DW;
+      const barLeft=iIni<0?iIni*DW:0;
+
+      const tr=ce('tr');
+      const tdl=ce('td'); tdl.className='col-lbl';
+      tdl.innerHTML=`<div class="lbl-titulo">${esc(d.titulo)}</div><div class="lbl-sub">${esc(d.nr||'')}${d.setor?' · '+esc(d.setor):''}</div>`;
+      tr.appendChild(tdl);
+
+      dias.forEach(({dow,isHoje,idx})=>{
+        const td=ce('td');
+        td.className='col-dia'+(dow===0||dow===6?' we':'')+(isHoje?' hoje':'');
+        td.style.height='72px';
+
+        if(idx===anchorIdx){
+          const bar=ce('div'); bar.className='bar-anchor';
+          const bw=Math.max(DW*2,barW+(barLeft<0?barLeft:0));
+          bar.style.cssText=`left:${barLeft<0?barLeft:0}px;width:${bw}px;background:${hexA(cor,.13)};border:${venc?'1.5px dashed #ff4757':'1px solid '+cor};color:${venc?'#ff4757':cor};`;
+          const prog=ce('div'); prog.className='bar-prog';
+          prog.style.cssText=`width:${Math.round(bw*d.progresso/100)}px;background:${hexA(cor,.3)};`;
+          bar.appendChild(prog);
+          const lbl=ce('span'); lbl.className='bar-lbl';
+          lbl.textContent=d.progresso+'%'+(d.status==='Concluída'?' ✓':'');
+          bar.appendChild(lbl);
+          bar.addEventListener('mouseenter',e=>ganttShowTT(e,d));
+          bar.addEventListener('mouseleave',ganttHideTT);
+          bar.addEventListener('mousemove',ganttMoveTT);
+          td.appendChild(bar);
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  });
+
+  setTimeout(()=>ganttIrHoje(false),60);
+}
+
+function ganttIrHoje(showToast=true){
+  if(!ganttJAN.ini) return;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const off=300+Math.round((hoje-ganttJAN.ini)/86400000)*DW;
+  $('gscroll').scrollTo({left:Math.max(0,off-400),behavior:'smooth'});
+  if(showToast) toast('Posicionado em hoje.','ok');
+}
+
+function ganttShowTT(e,d){
+  const cor=COR_RISCO[d.risco]||'#8892a4';
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const prazo=new Date(d.prazo);
+  const venc=prazo<hoje&&d.status!=='Concluída';
+  const dias=Math.round((prazo-hoje)/86400000);
+  $('tt').innerHTML=`
+    <div class="ttt">${esc(d.titulo)}</div>
+    <div class="ttr"><span class="ttl">Empresa</span><span class="ttv">${esc(d.empresa)}</span></div>
+    ${d.nr?`<div class="ttr"><span class="ttl">NR</span><span class="ttv">${esc(d.nr)}</span></div>`:''}
+    <div class="ttr"><span class="ttl">Risco</span><span class="ttv" style="color:${cor}">${esc(d.risco)}</span></div>
+    <div class="ttr"><span class="ttl">Status</span><span class="ttv">${esc(d.status)}</span></div>
+    <div class="ttr"><span class="ttl">Início</span><span class="ttv">${fmt(d.inicio)}</span></div>
+    <div class="ttr"><span class="ttl">Prazo</span><span class="ttv" style="color:${venc?'var(--red)':dias<=7&&dias>=0?'var(--orange)':'inherit'}">${fmt(d.prazo)}${venc?' ⚠':dias<=7&&dias>=0?' ⏰':''}</span></div>
+    ${d.status!=='Concluída'?`<div class="ttr"><span class="ttl">Dias restantes</span><span class="ttv" style="color:${venc?'var(--red)':dias<=7?'var(--orange)':'var(--t2)'}">${venc?'Vencida':dias+'d'}</span></div>`:''}
+    <div style="margin-top:8px">
+      <div class="ttr"><span class="ttl">Progresso</span><span class="ttv" style="color:${cor}">${d.progresso}%</span></div>
+      <div class="ttb"><div class="ttf" style="width:${d.progresso}%;background:${cor}"></div></div>
+    </div>`;
+  $('tt').classList.add('vis'); ganttMoveTT(e);
+}
+function ganttMoveTT(e){
+  const t=$('tt');
+  t.style.left=Math.min(e.clientX+16,window.innerWidth-t.offsetWidth-8)+'px';
+  t.style.top=Math.min(e.clientY-10,window.innerHeight-t.offsetHeight-8)+'px';
+}
+function ganttHideTT(){ $('tt').classList.remove('vis'); }
+
+/* ═══════════════════════════════════════════════════════════
+   ABA 3 — INDICADORES
+═══════════════════════════════════════════════════════════ */
+let indEmpFilter='';
+
+function indSetEmp(btn){
+  document.querySelectorAll('.esw').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  indEmpFilter=btn.dataset.v;
+  indRender();
+}
+
+function indGetScope(){
+  return indEmpFilter ? dados.filter(d=>d.empresa===indEmpFilter) : dados;
+}
+
+function indGetStatus(d){
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  if(d.status==='Concluída') return 'Concluída';
+  if(d.prazo&&new Date(d.prazo)<hoje) return 'Vencida';
+  return d.status;
+}
+
+function drawDonut(svgId,legId,items,total){
+  const svg=$(svgId), leg=$(legId);
+  const cx=65,cy=65,R=52,r=34;
+  svg.innerHTML=''; leg.innerHTML='';
+  if(!total){svg.innerHTML='<text x="65" y="70" text-anchor="middle" fill="#4a5568" font-size="12">sem dados</text>';return;}
+  let angle=-Math.PI/2;
+  items.forEach(({label,val,cor})=>{
+    if(!val) return;
+    const sweep=2*Math.PI*(val/total);
+    const x1=cx+R*Math.cos(angle), y1=cy+R*Math.sin(angle);
+    const x2=cx+R*Math.cos(angle+sweep), y2=cy+R*Math.sin(angle+sweep);
+    const xi1=cx+r*Math.cos(angle+sweep), yi1=cy+r*Math.sin(angle+sweep);
+    const xi2=cx+r*Math.cos(angle), yi2=cy+r*Math.sin(angle);
+    const large=sweep>Math.PI?1:0;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${xi1},${yi1} A${r},${r} 0 ${large},0 ${xi2},${yi2} Z`);
+    path.setAttribute('fill',cor); path.setAttribute('opacity','0.85');
+    svg.appendChild(path);
+    const pct=Math.round(val/total*100);
+    leg.innerHTML+=`<div class="dl-item">
+      <div class="dl-dot" style="background:${cor}"></div>
+      <span class="dl-name">${esc(label)}</span>
+      <span class="dl-val">${val}</span>
+      <span class="dl-pct">${pct}%</span>
+    </div>`;
+    angle+=sweep;
+  });
+  const circ=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circ.setAttribute('cx',cx); circ.setAttribute('cy',cy); circ.setAttribute('r',r-2);
+  circ.setAttribute('fill','#0f1218');
+  svg.appendChild(circ);
+}
+
+function drawRadial(pct){
+  const svg=$('radial-svg');
+  const cx=70,cy=70,R=58,stroke=10;
+  const circ=2*Math.PI*R;
+  const dash=circ*(pct/100);
+  svg.innerHTML=`
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#1a2030" stroke-width="${stroke}"/>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#00d4ff" stroke-width="${stroke}"
+      stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${circ*0.25}"
+      stroke-linecap="round" opacity="0.85"/>`;
+  $('radial-num').textContent=pct+'%';
+}
+
+function indRender(){
+  const scope=indGetScope();
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const total=scope.length;
+
+  const porStatus={Aberta:0,'Em andamento':0,Concluída:0,Vencida:0};
+  scope.forEach(d=>{const st=indGetStatus(d);porStatus[st]=(porStatus[st]||0)+1;});
+
+  const vencidas=porStatus.Vencida||0;
+  const concluidas=porStatus.Concluída||0;
+  const abertas=porStatus.Aberta||0;
+  const andamento=porStatus['Em andamento']||0;
+  const criticas=scope.filter(d=>d.risco==='Crítico'&&indGetStatus(d)!=='Concluída').length;
+  const progGeral=total?Math.round(scope.reduce((s,d)=>s+d.progresso,0)/total):0;
+
+  const proximas=scope.filter(d=>{
+    if(indGetStatus(d)==='Concluída') return false;
+    if(!d.prazo) return false;
+    const diff=Math.round((new Date(d.prazo)-hoje)/86400000);
+    return diff<=-1||diff<=15;
+  }).sort((a,b)=>new Date(a.prazo)-new Date(b.prazo));
+
+  /* KPIs */
+  $('kpi-grid').innerHTML=`
+    <div class="kpi"><div class="kpi-lbl">Total</div><div class="kpi-num">${String(total).padStart(2,'0')}</div><div class="kpi-sub">demandas cadastradas</div></div>
+    <div class="kpi red"><div class="kpi-lbl">Vencidas</div><div class="kpi-num">${String(vencidas).padStart(2,'0')}</div><div class="kpi-sub">prazo expirado</div></div>
+    <div class="kpi orange"><div class="kpi-lbl">Em andamento</div><div class="kpi-num">${String(andamento).padStart(2,'0')}</div><div class="kpi-sub">em execução</div></div>
+    <div class="kpi"><div class="kpi-lbl">Abertas</div><div class="kpi-num">${String(abertas).padStart(2,'0')}</div><div class="kpi-sub">não iniciadas</div></div>
+    <div class="kpi red"><div class="kpi-lbl">Críticas</div><div class="kpi-num">${String(criticas).padStart(2,'0')}</div><div class="kpi-sub">risco crítico ativo</div></div>
+    <div class="kpi green"><div class="kpi-lbl">Concluídas</div><div class="kpi-num">${String(concluidas).padStart(2,'0')}</div><div class="kpi-sub">${total?Math.round(concluidas/total*100):0}% do total</div></div>`;
+
+  drawDonut('donut-status','leg-status',[
+    {label:'Concluída',val:concluidas,cor:'#26de81'},
+    {label:'Em andamento',val:andamento,cor:'#ff9f43'},
+    {label:'Aberta',val:abertas,cor:'#00d4ff'},
+    {label:'Vencida',val:vencidas,cor:'#ff4757'},
+  ],total);
+
+  const porRisco={Baixo:0,Médio:0,Alto:0,Crítico:0};
+  scope.forEach(d=>{porRisco[d.risco]=(porRisco[d.risco]||0)+1;});
+  drawDonut('donut-risco','leg-risco',[
+    {label:'Crítico',val:porRisco.Crítico,cor:'#ff4757'},
+    {label:'Alto',val:porRisco.Alto,cor:'#ff9f43'},
+    {label:'Médio',val:porRisco.Médio,cor:'#ffd32a'},
+    {label:'Baixo',val:porRisco.Baixo,cor:'#26de81'},
+  ],total);
+
+  drawRadial(progGeral);
+
+  const empresas=[...new Set(dados.map(d=>d.empresa))];
+  const progEmp=$('prog-empresa');
+  progEmp.innerHTML='';
+  empresas.forEach(emp=>{
+    const items=scope.filter(d=>d.empresa===emp);
+    if(!items.length) return;
+    const p=Math.round(items.reduce((s,d)=>s+d.progresso,0)/items.length);
+    const ec=emp==='CD Manaus'?'#63b3ed':'#a29bfe';
+    progEmp.innerHTML+=`<div class="hbar-item">
+      <div class="hbar-header"><span class="hbar-name" style="color:${ec}">${esc(emp)}</span><span class="hbar-val">${p}%</span></div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${p}%;background:${ec}"></div></div>
+    </div>`;
+  });
+
+  /* Alertas */
+  const al=$('alert-list');
+  al.innerHTML='';
+  if(!proximas.length){
+    al.innerHTML='<div class="vazio" style="padding:20px;font-size:13px">Nenhuma demanda vencida ou vencendo em breve.</div>';
+  } else {
+    proximas.forEach(d=>{
+      const diff=Math.round((new Date(d.prazo)-hoje)/86400000);
+      const venc=diff<0;
+      const cor=COR_RISCO[d.risco]||'#8892a4';
+      const cls=d.risco.toLowerCase().replace('é','e').replace('í','i');
+      const diasTxt=venc?`-${Math.abs(diff)}d`:(diff===0?'Hoje':diff+'d');
+      const diasCor=venc?'var(--red)':diff<=3?'var(--orange)':'var(--yellow)';
+      al.innerHTML+=`<div class="alert-item ${cls}">
+        <span class="alert-dias" style="color:${diasCor}">${diasTxt}</span>
+        <div class="alert-info">
+          <div class="alert-titulo">${esc(d.titulo)}</div>
+          <div class="alert-sub">${esc(d.empresa)} · ${esc(d.nr||'')}${d.setor?' · '+esc(d.setor):''}</div>
+        </div>
+        <span class="chip-sm" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${esc(d.risco)}</span>
+      </div>`;
+    });
+  }
+
+  /* Comparativo empresas */
+  const ec=$('emp-compare');
+  ec.innerHTML='';
+  ['CD Manaus','CD Embu'].forEach(emp=>{
+    const items=dados.filter(d=>d.empresa===emp);
+    if(!items.length) return;
+    const tot=items.length;
+    const conc=items.filter(d=>d.status==='Concluída').length;
+    const venc=items.filter(d=>indGetStatus(d)==='Vencida').length;
+    const crit=items.filter(d=>d.risco==='Crítico'&&indGetStatus(d)!=='Concluída').length;
+    const prog=Math.round(items.reduce((s,d)=>s+d.progresso,0)/tot);
+    const color=emp==='CD Manaus'?'#63b3ed':'#a29bfe';
+    ec.innerHTML+=`<div class="emp-card">
+      <div class="emp-card-title" style="color:${color}">${esc(emp)}</div>
+      <div class="emp-stat"><span class="emp-stat-lbl">Total</span><span class="emp-stat-val">${tot}</span></div>
+      <div class="emp-stat"><span class="emp-stat-lbl">Concluídas</span><span class="emp-stat-val" style="color:var(--green)">${conc}</span></div>
+      <div class="emp-stat"><span class="emp-stat-lbl">Vencidas</span><span class="emp-stat-val" style="color:var(--red)">${venc}</span></div>
+      <div class="emp-stat"><span class="emp-stat-lbl">Críticas</span><span class="emp-stat-val" style="color:var(--red)">${crit}</span></div>
+      <div class="emp-stat"><span class="emp-stat-lbl">Progresso médio</span><span class="emp-stat-val" style="color:var(--cyan)">${prog}%</span></div>
+    </div>`;
+  });
+
+  /* Timeline por mês */
+  const porMes={};
+  scope.forEach(d=>{
+    if(!d.prazo) return;
+    const[y,m]=d.prazo.split('-');
+    const key=`${y}-${m}`;
+    if(!porMes[key]) porMes[key]={key,y,m,total:0,conc:0,aberta:0,venc:0};
+    porMes[key].total++;
+    const st=indGetStatus(d);
+    if(st==='Concluída') porMes[key].conc++;
+    else if(st==='Vencida') porMes[key].venc++;
+    else porMes[key].aberta++;
+  });
+  const mesKeys=Object.keys(porMes).sort();
+  const maxMes=Math.max(...mesKeys.map(k=>porMes[k].total),1);
+  const tl=$('ind-timeline');
+  tl.innerHTML='';
+  if(!mesKeys.length){tl.innerHTML='<div class="vazio">Sem dados</div>';return;}
+  mesKeys.forEach(k=>{
+    const{y,m,total,conc,aberta}=porMes[k];
+    const pct=Math.round(total/maxMes*100);
+    const label=`${MESES[parseInt(m)-1]} ${y}`;
+    const concPct=Math.round(conc/total*100);
+    const abertaPct=Math.round(aberta/total*100);
+    tl.innerHTML+=`<div class="tl-row">
+      <span class="tl-mes">${label}</span>
+      <div class="tl-bar-wrap">
+        <div style="display:flex;height:100%;width:${pct}%">
+          <div style="width:${concPct}%;background:#26de81;opacity:.8"></div>
+          <div style="width:${abertaPct}%;background:#ff9f43;opacity:.8"></div>
+          <div style="width:${Math.max(0,100-concPct-abertaPct)}%;background:#ff4757;opacity:.8"></div>
+        </div>
+      </div>
+      <span class="tl-count">${total}</span>
+    </div>`;
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INICIALIZAÇÃO
+═══════════════════════════════════════════════════════════ */
+// Aguarda SDKs do Firebase carregarem antes de inicializar
+function startApp(){
+  tick();
+  setInterval(tick,1000);
+  if(typeof firebase !== 'undefined'){
+    initFirebase();
+  } else {
+    console.warn('Firebase SDK não disponível — modo offline');
+    loadLocalFallback();
+    demRender();
+  }
+}
+
+// window.onload garante que os SDKs externos (Firebase) já carregaram
+window.addEventListener('load', startApp);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+window.addEventListener('resize',()=>{
+  if($('page-gantt').classList.contains('active')) ganttBuild();
+});
+</script>
+</body>
+</html>
